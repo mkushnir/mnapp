@@ -14,7 +14,9 @@ nobase_include_HEADERS = mrkapp.h
 
 noinst_HEADERS =
 
-libmrkapp_la_SOURCES = foo.c mrkapp.c
+libmrkapp_la_SOURCES = mrkapp.c \
+		       mrk_local_server.c
+
 nodist_libmrkapp_la_SOURCES = diag.c
 
 if DEBUG

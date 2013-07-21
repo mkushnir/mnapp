@@ -6,6 +6,8 @@ extern "C" {
 #endif
 
 
+int mrk_local_server(int, void **);
+void mrk_local_server_shutdown(void);
 
 #ifdef __cplusplus
 }
