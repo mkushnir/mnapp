@@ -1,0 +1,52 @@
+#!/bin/sh
+
+if test "$1" = "init"
+then
+    export LDFLAGS=-L$HOME/lib
+    export CFLAGS=-I$HOME/include
+
+    aclocal
+    autoheader
+    autoreconf
+    automake --add-missing
+    libtoolize
+    make distclean
+    autoreconf
+    ./configure --prefix=$HOME --enable-debug
+elif test "$1" = "dev"
+then
+    export LDFLAGS=-L$HOME/lib
+    export CFLAGS=-I$HOME/include
+    autoreconf
+    ./configure --prefix=$HOME --enable-debug
+    make
+elif test "$1" = "dev-ndebug"
+then
+    export LDFLAGS=-L$HOME/lib
+    export CFLAGS=-I$HOME/include
+    autoreconf
+    ./configure --prefix=$HOME
+    make
+elif test "$1" = "dist"
+then
+    unset LDFLAGS
+    unset CFLAGS
+    autoreconf
+    ./configure
+    make dist
+    if test -f port/distinfo
+    then
+        truncate -s0 port/distinfo
+    fi
+    for i in *.tar.gz
+    do
+        cp -v $i /usr/data/distfiles/
+        if test -f port/distinfo
+        then
+            /sbin/sha256 $i >port/distinfo
+            echo "SIZE ($i) = `stat -f%z $i`" >>port/distinfo
+        fi
+    done
+else
+    echo "`basename $0` {init|dev|dist|dev-ndebug}"
+fi
