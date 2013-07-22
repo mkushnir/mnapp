@@ -20,7 +20,7 @@ mrk_local_server_shutdown(void)
 }
 
 int
-mrk_local_server(int argc, void **argv)
+mrk_local_server(UNUSED int argc, void **argv)
 {
     const char *path;
     int(*cb)(int, void **);
