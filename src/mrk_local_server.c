@@ -22,6 +22,7 @@ mrk_local_server_shutdown(void)
 int
 mrk_local_server(UNUSED int argc, void **argv)
 {
+    int listen_backlog;
     const char *path;
     int(*cb)(int, void **);
     void *udata;
@@ -31,11 +32,16 @@ mrk_local_server(UNUSED int argc, void **argv)
     size_t sz;
     struct stat sb;
 
-    assert(argc == 3);
+    assert(argc == 4);
 
-    path = argv[0];
-    cb = argv[1];
-    udata = argv[2];
+    listen_backlog = (int)(intptr_t)(argv[0]);
+    path = argv[1];
+    cb = argv[2];
+    udata = argv[3];
+
+    if (listen_backlog <= 0) {
+        listen_backlog = 1;
+    }
 
     if (stat(path, &sb) == 0) {
         if (S_ISSOCK(sb.st_mode)) {
@@ -60,7 +66,7 @@ mrk_local_server(UNUSED int argc, void **argv)
         FAIL("bind");
     }
 
-    if (listen(s, 1) != 0) {
+    if (listen(s, listen_backlog) != 0) {
         FAIL("listen");
     }
 
