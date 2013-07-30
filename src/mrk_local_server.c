@@ -14,13 +14,13 @@
 int _shutdown = 0;
 
 void
-mrk_local_server_shutdown(void)
+local_server_shutdown(void)
 {
     _shutdown = 1;
 }
 
 int
-mrk_local_server(UNUSED int argc, void **argv)
+local_server(UNUSED int argc, void **argv)
 {
     int listen_backlog;
     const char *path;
@@ -79,15 +79,11 @@ mrk_local_server(UNUSED int argc, void **argv)
         }
         for (i = 0; i < sz; ++i) {
             mrkthr_socket_t *psock;
-            mrkthr_ctx_t *thr;
 
             psock = sockets + i;
             TRACE("accepted fd=%d", psock->fd);
 
-            if ((thr = mrkthr_new(NULL, cb, 2, psock->fd, udata)) == NULL) {
-                FAIL("mrkthr_new");
-            }
-            mrkthr_run(thr);
+            mrkthr_spawn(NULL, cb, 2, psock->fd, udata);
         }
 
         if (sockets != NULL) {

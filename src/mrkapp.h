@@ -6,8 +6,9 @@ extern "C" {
 #endif
 
 
-int mrk_local_server(int, void **);
-void mrk_local_server_shutdown(void);
+int local_server(int, void **);
+void local_server_shutdown(void);
+void daemonize(const char *, const char *, const char *);
 
 #ifdef __cplusplus
 }
