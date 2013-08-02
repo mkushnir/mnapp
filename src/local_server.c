@@ -1,5 +1,6 @@
 #include <assert.h>
 
+#include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -79,11 +80,13 @@ local_server(UNUSED int argc, void **argv)
         }
         for (i = 0; i < sz; ++i) {
             mrkthr_socket_t *psock;
+            char buf[32];
 
             psock = sockets + i;
-            TRACE("accepted fd=%d", psock->fd);
+            CTRACE("accepted fd=%d", psock->fd);
+            snprintf(buf, sizeof(buf), "local_server @%d", psock->fd);
 
-            mrkthr_spawn(NULL, cb, 2, psock->fd, udata);
+            mrkthr_spawn(buf, cb, 2, psock->fd, udata);
         }
 
         if (sockets != NULL) {
