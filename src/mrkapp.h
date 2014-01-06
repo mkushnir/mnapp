@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+const char *mrkapp_diag_str(int);
 
 int local_server(int, void **);
 void local_server_shutdown(void);
