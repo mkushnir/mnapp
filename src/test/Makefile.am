@@ -2,7 +2,7 @@ AUTOMAKE_OPTIONS = foreign
 CLEANFILES = *.core
 #CLEANFILES += *.in
 
-noinst_PROGRAMS=testfoo testdaemonize
+noinst_PROGRAMS=testfoo testdaemonize testfasthash
 
 distdir = ../../$(PACKAGE)-$(VERSION)/src/test
 dist_HEADERS = unittest.h
@@ -24,6 +24,10 @@ testfoo_LDFLAGS = -L$(libdir) -lmrkapp
 testdaemonize_SOURCES = testdaemonize.c
 testdaemonize_CFLAGS = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 -I.. -I$(includedir)
 testdaemonize_LDFLAGS = -L$(libdir) -lmrkapp
+
+testfasthash_SOURCES = testfasthash.c
+testfasthash_CFLAGS = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 -I.. -I$(includedir)
+testfasthash_LDFLAGS = -L$(libdir) -lmrkapp
 
 ../diag.c ../diag.h: ../diag.txt
 	sh ../gen-diag mrkapp
