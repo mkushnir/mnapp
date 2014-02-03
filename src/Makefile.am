@@ -16,8 +16,7 @@ noinst_HEADERS =
 
 libmrkapp_la_SOURCES = mrkapp.c \
 		       local_server.c \
-		       daemonize.c \
-		       fasthash.c
+		       daemonize.c
 
 nodist_libmrkapp_la_SOURCES = diag.c
 
