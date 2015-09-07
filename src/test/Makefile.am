@@ -26,7 +26,7 @@ testdaemonize_CFLAGS = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 -I.. -I$(in
 testdaemonize_LDFLAGS = -L$(libdir) -lmrkapp
 
 ../diag.c ../diag.h: ../diag.txt
-	sh ../gen-diag mrkapp
+	$(AM_V_GEN) /bin/sh ../gen-diag mrkapp
 
 testrun: all
 	for i in $(noinst_PROGRAMS); do if test -x ./$$i; then LD_LIBRARY_PATH=$(libdir) ./$$i; fi; done;
