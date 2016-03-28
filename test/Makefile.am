@@ -1,15 +1,11 @@
-AUTOMAKE_OPTIONS = foreign
+AUTOMAKE_OPTIONS = foreign subdir-objects
 CLEANFILES = *.core
 #CLEANFILES += *.in
 
 noinst_PROGRAMS=testfoo testdaemonize
 
-distdir = ../../$(PACKAGE)-$(VERSION)/src/test
+distdir = $(top_srcdir)/$(PACKAGE)-$(VERSION)/test
 dist_HEADERS = unittest.h
-
-BUILT_SOURCES = ../diag.c ../diag.h
-
-noinst_HEADERS = ../mrkapp.h
 
 if DEBUG
     DEBUG_FLAGS = -g -O0 @CLANG_DEBUG@
@@ -18,15 +14,12 @@ DEBUG_FLAGS = -DNDEBUG -O3
 endif
 
 testfoo_SOURCES = testfoo.c
-testfoo_CFLAGS = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 -I.. -I$(includedir)
-testfoo_LDFLAGS = -L$(libdir) -lmrkapp
+testfoo_CFLAGS = @_GNU_SOURCE_MACRO@ $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
+testfoo_LDFLAGS = -L$(top_srcdir)/src/.libs -lmrkapp
 
 testdaemonize_SOURCES = testdaemonize.c
-testdaemonize_CFLAGS = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 -I.. -I$(includedir)
-testdaemonize_LDFLAGS = -L$(libdir) -lmrkapp
-
-../diag.c ../diag.h: ../diag.txt
-	$(AM_V_GEN) /bin/sh ../gen-diag mrkapp
+testdaemonize_CFLAGS = @_GNU_SOURCE_MACRO@ $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
+testdaemonize_LDFLAGS = -L$(top_srcdir)/src/.libs -lmrkapp
 
 testrun: all
 	for i in $(noinst_PROGRAMS); do if test -x ./$$i; then LD_LIBRARY_PATH=$(libdir) ./$$i; fi; done;

@@ -57,7 +57,9 @@ local_server(UNUSED int argc, void **argv)
     sa.sun_family = PF_LOCAL;
     strncpy(sa.sun_path, path, sz);
     sa.sun_path[sz] = '\0';
+#ifdef HAVE_SUN_LEN
     sa.sun_len = strlen(sa.sun_path);
+#endif
 
     if ((s = socket(PF_LOCAL, SOCK_STREAM, 0)) < 0) {
         FAIL("socket");

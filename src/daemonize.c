@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -89,7 +90,10 @@ daemonize(const char *pidfile,
     if (pidfile != NULL) {
         char buf[32];
 
-        if ((fd = open(pidfile, O_WRONLY|O_CREAT|O_TRUNC|O_EXLOCK|O_NONBLOCK, 0644)) < 0) {
+        if ((fd = open(pidfile, O_WRONLY|O_CREAT|O_TRUNC|O_NONBLOCK, 0644)) < 0) {
+            exit(1);
+        }
+        if (flock(fd, LOCK_EX|LOCK_NB) == -1) {
             exit(1);
         }
         snprintf(buf, countof(buf), "%d", getpid());

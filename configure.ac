@@ -40,9 +40,20 @@ else
     fi
 fi
 
+AC_CANONICAL_HOST
+AC_CANONICAL_TARGET
+case "$target_os" in
+    *linux*)
+        AC_SUBST(_GNU_SOURCE_MACRO, ['-D_GNU_SOURCE'])
+    ;;
+    *)
+        AC_SUBST(_GNU_SOURCE_MACRO)
+    ;;
+esac
+
 AC_CONFIG_MACRO_DIR([m4])
 
-#AC_LANG(C)
+AC_LANG(C)
 
 AC_PROG_CC
 AC_PROG_CXX
@@ -56,17 +67,26 @@ AM_SILENT_RULES([yes])
 
 dnl AM_MAINTAINER_MODE
 
-AC_CONFIG_FILES([Makefile src/Makefile src/test/Makefile man/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile test/Makefile man/Makefile])
 AC_CONFIG_HEADERS(config.h)
 
-AC_CHECK_HEADERS([syslog.h])
+AC_CHECK_HEADERS([syslog.h fcntl.h netdb.h sys/socket.h sys/time.h])
 
 AC_C_CONST
 AC_C_INLINE
+
 AC_TYPE_SIZE_T
+AC_TYPE_MODE_T
+AC_TYPE_OFF_T
+AC_TYPE_PID_T
 
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
+AC_FUNC_FORK
+AC_CHECK_FUNCS([dup2 memset socket])
+
+AC_CHECK_MEMBER([struct sockaddr_un.sun_len],
+                AC_DEFINE([HAVE_SUN_LEN], [1], [Define if sockaddr_un.sun_len exists]))
 
 AC_PRESERVE_HELP_ORDER
 

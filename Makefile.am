@@ -1,5 +1,5 @@
 distdir = $(PACKAGE)-$(VERSION)
-SUBDIRS = src man
+SUBDIRS = src test man
 #CLEANFILES = *.in *.m4 *.log *.scan configure
 
 run:

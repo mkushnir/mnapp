@@ -1,4 +1,4 @@
-AUTOMAKE_OPTIONS = foreign
+AUTOMAKE_OPTIONS = foreign subdir-objects
 
 distdir = ../$(PACKAGE)-$(VERSION)/src
 dist_HEADERS = mrkapp_private.h
@@ -26,11 +26,9 @@ else
 DEBUG_FLAGS = -DNDEBUG -O3
 endif
 
-libmrkapp_la_CFLAGS = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 -I$(includedir)
+libmrkapp_la_CFLAGS = @_GNU_SOURCE_MACRO@ $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 -I$(includedir)
 
 libmrkapp_la_LDFLAGS = -version-info 0:0:0 -L$(libdir) -lmrkcommon
-
-SUBDIRS = . test
 
 diag.c diag.h: diag.txt
 	$(AM_V_GEN) sh ./gen-diag mrkapp
