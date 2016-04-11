@@ -1,7 +1,7 @@
 AUTOMAKE_OPTIONS = foreign subdir-objects
 
 distdir = ../$(PACKAGE)-$(VERSION)/src
-dist_HEADERS =
+dist_HEADERS = mrkapp_private.h
 
 BUILT_SOURCES = diag.c diag.h
 EXTRA_DIST = diag.txt gen-diag
@@ -12,7 +12,7 @@ lib_LTLIBRARIES = libmrkapp.la
 
 nobase_include_HEADERS = mrkapp.h
 
-noinst_HEADERS = mrkapp_private.h
+noinst_HEADERS =
 
 libmrkapp_la_SOURCES = mrkapp.c \
 		       local_server.c \
