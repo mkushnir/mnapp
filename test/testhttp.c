@@ -19,7 +19,7 @@ const char *_malloc_options = "AJ";
 static int
 myline(http_ctx_t *ctx, UNUSED bytestream_t *bs, UNUSED void *udata)
 {
-    CTRACE("request uri=%s", ctx->request_uri);
+    CTRACE("method=%d request uri=%s", ctx->code.method, ctx->request_uri);
     return 0;
 }
 

@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include <sys/un.h>
 
-#define TRRET_DEBUG
+//#define TRRET_DEBUG
 #include <mrkcommon/dumpm.h>
 
 #include <mrkthr.h>
