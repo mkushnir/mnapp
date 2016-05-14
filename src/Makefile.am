@@ -10,11 +10,12 @@ CLEANFILES = $(BUILT_SOURCES) *.core
 
 lib_LTLIBRARIES = libmrkapp.la
 
-nobase_include_HEADERS = mrkapp.h
+nobase_include_HEADERS = mrkapp.h mrkhttp.h
 
 noinst_HEADERS =
 
 libmrkapp_la_SOURCES = mrkapp.c \
+		       mrkhttp.c \
 		       local_server.c \
 		       daemonize.c
 
