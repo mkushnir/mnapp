@@ -25,6 +25,18 @@ extern "C" {
 #define MRKHTTP_MCONNECT (8)
 #define MRKHTTP_MEXT (9)
 
+#define MRKHTTP_MSTR(m)                \
+((m) == MRKHTTP_MOPTIONS ? "OPTIONS":  \
+ (m) == MRKHTTP_MGET ? "GET":          \
+ (m) == MRKHTTP_MHEAD ? "HEAD":        \
+ (m) == MRKHTTP_MPOST ? "POST":        \
+ (m) == MRKHTTP_MPUT ? "PUT":          \
+ (m) == MRKHTTP_MDELETE ? "DELETE":    \
+ (m) == MRKHTTP_MTRACE ? "TRACE":      \
+ (m) == MRKHTTP_MCONNECT ? "CONNECT":  \
+ "<ext>")                              \
+
+
 typedef struct _http_ctx {
 #define PS_START 1
 #define PS_LINE 2
