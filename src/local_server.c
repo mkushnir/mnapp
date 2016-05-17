@@ -169,7 +169,7 @@ mrkapp_tcp_server_fini(mrkapp_tcp_server_t *srv)
 
 
 static int
-mrkapp_tcp_server_worker(int argc, void **argv)
+mrkapp_tcp_server_worker(UNUSED int argc, void **argv)
 {
     int res;
     mrkapp_tcp_server_t *srv;
