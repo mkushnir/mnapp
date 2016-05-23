@@ -27,9 +27,9 @@ else
 DEBUG_FLAGS = -DNDEBUG -O3
 endif
 
-libmrkapp_la_CFLAGS = @_GNU_SOURCE_MACRO@ $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 -I$(includedir)
+libmrkapp_la_CFLAGS = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 @MRKCOMMON_LOCAL_CFLAGS@ @MRKTHR_LOCAL_CFLAGS@ @_GNU_SOURCE_MACRO@ -I$(includedir)
 
-libmrkapp_la_LDFLAGS = -version-info 0:0:0 -L$(libdir) -lmrkcommon
+libmrkapp_la_LDFLAGS = -version-info 0:0:0 -L$(libdir) -lmrkcommon @MRKCOMMON_LOCAL_LDFLAGS@ -lmrkthr @MRKTHR_LOCAL_LDFLAGS@
 
 diag.c diag.h: diag.txt
 	$(AM_V_GEN) sh ./gen-diag mrkapp
