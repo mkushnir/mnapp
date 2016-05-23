@@ -97,7 +97,14 @@ daemonize(const char *pidfile,
             exit(1);
         }
         snprintf(buf, countof(buf), "%d", getpid());
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
+#endif
         write(fd, buf, strlen(buf));
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
         fsync(fd);
     }
 }
