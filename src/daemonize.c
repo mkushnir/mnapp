@@ -107,7 +107,6 @@ daemonize(const char *pidfile,
 #ifdef __GNUC__
 #if GCC_VERSION >= 40200
 #pragma GCC diagnostic pop
-#pragma GCC diagnostic pop
 #endif
 #endif
         fsync(fd);
