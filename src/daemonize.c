@@ -109,6 +109,7 @@ daemonize(const char *pidfile,
 #pragma GCC diagnostic pop
 #pragma GCC diagnostic pop
 #endif
+#endif
         fsync(fd);
     }
 }
