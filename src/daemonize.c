@@ -22,7 +22,7 @@ myfork(void)
         FAIL("fork");
     } else if (pid > 0) {
         /* parent */
-        exit(0);
+        _exit(0);
     } else {
         /* child */
     }
@@ -44,7 +44,9 @@ daemonize(const char *pidfile,
 
     /* create a clean session in the first child */
     old_umask = umask(0);
-    setsid();
+    if (setsid() == -1) {
+        FAIL("setsid");
+    }
 
     /* perform second fork */
     myfork();
@@ -110,6 +112,7 @@ daemonize(const char *pidfile,
 #endif
 #endif
         fsync(fd);
+
+        (void)chdir("/");
     }
 }
-
