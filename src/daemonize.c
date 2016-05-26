@@ -98,11 +98,15 @@ daemonize(const char *pidfile,
         }
         snprintf(buf, countof(buf), "%d", getpid());
 #ifdef __GNUC__
+#if GCC_VERSION >= 40200
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-result"
 #endif
+#endif
         write(fd, buf, strlen(buf));
 #ifdef __GNUC__
+#if GCC_VERSION >= 40200
+#pragma GCC diagnostic pop
 #pragma GCC diagnostic pop
 #endif
         fsync(fd);
