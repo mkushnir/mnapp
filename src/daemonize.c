@@ -99,20 +99,14 @@ daemonize(const char *pidfile,
             exit(1);
         }
         snprintf(buf, countof(buf), "%d", getpid());
-#ifdef __GNUC__
-#if GCC_VERSION >= 40200
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-result"
-#endif
-#endif
-        write(fd, buf, strlen(buf));
-#ifdef __GNUC__
-#if GCC_VERSION >= 40200
-#pragma GCC diagnostic pop
-#endif
-#endif
-        fsync(fd);
-
-        (void)chdir("/");
+        if (write(fd, buf, strlen(buf) <= 0)) {
+            FAIL("write");
+        }
+        if (fsync(fd) != 0) {
+            FAIL("fsync");
+        }
+        if (chdir("/") != 0) {
+            FAIL("chdir");
+        }
     }
 }
