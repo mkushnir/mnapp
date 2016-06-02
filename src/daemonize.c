@@ -99,7 +99,7 @@ daemonize(const char *pidfile,
             exit(1);
         }
         snprintf(buf, countof(buf), "%d", getpid());
-        if (write(fd, buf, strlen(buf) <= 0)) {
+        if (write(fd, buf, strlen(buf)) <= 0) {
             FAIL("write");
         }
         if (fsync(fd) != 0) {
