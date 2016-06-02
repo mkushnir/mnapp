@@ -92,12 +92,21 @@ daemonize(const char *pidfile,
     if (pidfile != NULL) {
         char buf[32];
 
-        if ((fd = open(pidfile, O_WRONLY|O_CREAT|O_TRUNC|O_NONBLOCK, 0644)) < 0) {
+#ifdef O_EXLOCK
+        if ((fd = open(pidfile, O_WRONLY|O_CREAT|O_TRUNC|O_NONBLOCK|O_EXLOCK, 0644)) < 0) {
+            exit(1);
+        }
+#else
+        if ((fd = open(pidfile, O_WRONLY|O_CREAT|O_NONBLOCK, 0644)) < 0) {
             exit(1);
         }
         if (flock(fd, LOCK_EX|LOCK_NB) == -1) {
             exit(1);
         }
+        if (lseek(fd, 0, SEEK_END) < 0) {
+            exit(1);
+        }
+#endif
         snprintf(buf, countof(buf), "%d", getpid());
         if (write(fd, buf, strlen(buf)) <= 0) {
             FAIL("write");
