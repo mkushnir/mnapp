@@ -4,8 +4,7 @@ CLEANFILES = *.core
 
 noinst_PROGRAMS=testfoo testdaemonize testhttp
 
-distdir = $(top_srcdir)/$(PACKAGE)-$(VERSION)/test
-dist_HEADERS = unittest.h
+noinst_HEADERS = unittest.h
 
 if DEBUG
 DEBUG_FLAGS = -g -O0 @CLANG_DEBUG@
