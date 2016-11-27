@@ -9,11 +9,12 @@ extern "C" {
 #endif
 
 /* bytestream_consume */
-#define PARSE_EOF (-1)
-#define PARSE_NEED_MORE (-2)
+#define MRKHTTP_PARSE_EOF (-1)
+#define MRKHTTP_PARSE_NEED_MORE (-2)
 /* end of data */
-#define PARSE_EOD (-3)
-#define PARSE_EMPTY (-4)
+#define MRKHTTP_PARSE_EOD (-3)
+#define MRKHTTP_PARSE_EMPTY (-4)
+#define MRKHTTP_PARSE_CONSUME_DATA_ERROR (-5)
 
 #define MRKHTTP_MOPTIONS (1)
 #define MRKHTTP_MGET (2)

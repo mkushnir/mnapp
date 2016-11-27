@@ -93,7 +93,7 @@ local_server(UNUSED int argc, void **argv)
             psock = sockets + i;
             snprintf(buf, sizeof(buf), "local_server @%d", psock->fd);
 
-            mrkthr_spawn(buf, cb, 2, psock->fd, udata);
+            (void)MRKTHR_SPAWN(buf, cb, psock->fd, udata);
         }
 
         if (sockets != NULL) {
@@ -269,9 +269,8 @@ mrkapp_tcp_server_start(mrkapp_tcp_server_t *srv)
         TRRET(MRKAPP_TCP_SERVER_START + 5);
     }
 
-    srv->thread = mrkthr_spawn(srv->hostname,
+    srv->thread = MRKTHR_SPAWN(srv->hostname,
                                mrkapp_tcp_server_worker,
-                               1,
                                srv);
 
     return 0;

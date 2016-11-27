@@ -361,7 +361,7 @@ process_header(http_ctx_t *ctx, bytestream_t *in)
         }
     }
 
-    return PARSE_NEED_MORE;
+    return MRKHTTP_PARSE_NEED_MORE;
 }
 
 
@@ -408,7 +408,7 @@ process_body(http_ctx_t *ctx,
                 //   MIN(128, SEOD(in) - ctx->current_chunk.start));
 
                 SADVANCEPOS(in, SEOD(in) - SPOS(in));
-                TRRET(PARSE_NEED_MORE);
+                TRRET(MRKHTTP_PARSE_NEED_MORE);
             }
             ctx->current_chunk_size = strtol(SDATA(in,
                         ctx->current_chunk.start), &tmp, 16);
@@ -426,7 +426,7 @@ process_body(http_ctx_t *ctx,
             ctx->current_chunk.end = ctx->current_chunk.start;
             ctx->chunk_parser_state = PS_CHUNK_DATA;
 
-            TRRET(PARSE_NEED_MORE);
+            TRRET(MRKHTTP_PARSE_NEED_MORE);
 
         } else if (ctx->chunk_parser_state == PS_CHUNK_DATA) {
             int needed, navail;
@@ -446,7 +446,7 @@ process_body(http_ctx_t *ctx,
                 ctx->current_chunk.end += incr;
                 SADVANCEPOS(in, incr);
 
-                TRRET(PARSE_NEED_MORE);
+                TRRET(MRKHTTP_PARSE_NEED_MORE);
 
             } else {
                 //TRACE("chunk complete: sz=%d/%ld",
@@ -471,7 +471,7 @@ process_body(http_ctx_t *ctx,
                 if (ctx->current_chunk_size > 0) {
                     /* recycle */
                     recycle_stream_buffer(ctx, in);
-                    TRRET(PARSE_NEED_MORE);
+                    TRRET(MRKHTTP_PARSE_NEED_MORE);
                 } else {
                     /* recycle */
                     recycle_stream_buffer(ctx, in);
@@ -505,7 +505,7 @@ process_body(http_ctx_t *ctx,
         //D16(SPDATA(in), navail);
 
         if (accumulated < ctx->bodysz) {
-            TRRET(PARSE_NEED_MORE);
+            TRRET(MRKHTTP_PARSE_NEED_MORE);
         } else {
             if (body_cb != NULL) {
                 if (body_cb(ctx, in, udata) != 0) {
@@ -564,9 +564,9 @@ parse_request_line(http_ctx_t *ctx, bytestream_t *in, UNUSED void *udata)
     if ((end = findcrlf(SDATA(in, ctx->first_line.start),
                         SEOD(in) - ctx->first_line.start)) == NULL) {
 
-        /* PARSE_NEED_MORE */
+        /* MRKHTTP_PARSE_NEED_MORE */
         SADVANCEPOS(in, SEOD(in) - SPOS(in));
-        return PARSE_NEED_MORE;
+        return MRKHTTP_PARSE_NEED_MORE;
     }
 
     ctx->first_line.end = SDPOS(in, end);
@@ -668,9 +668,9 @@ parse_status_line(http_ctx_t *ctx, bytestream_t *in, UNUSED void *udata)
     if ((end = findcrlf(SDATA(in, ctx->first_line.start),
                         SEOD(in) - ctx->first_line.start)) == NULL) {
 
-        /* PARSE_NEED_MORE */
+        /* MRKHTTP_PARSE_NEED_MORE */
         SADVANCEPOS(in, SEOD(in) - SPOS(in));
-        return PARSE_NEED_MORE;
+        return MRKHTTP_PARSE_NEED_MORE;
     }
 
     ctx->first_line.end = SDPOS(in, end);
@@ -750,12 +750,10 @@ _http_parse_message(int fd,
                     http_cb_t body_cb,
                     void *udata)
 {
-    int res = PARSE_NEED_MORE;
+    int res = MRKHTTP_PARSE_NEED_MORE;
     http_ctx_t *ctx = in->udata;
 
-    http_ctx_fini(ctx);
-
-    while (res == PARSE_NEED_MORE) {
+    while (res == MRKHTTP_PARSE_NEED_MORE) {
 
         if (SNEEDMORE(in)) {
             int lres;
@@ -766,10 +764,10 @@ _http_parse_message(int fd,
                 TRACE("consume_data returned %08x", lres);
                 perror("consume_data");
 #endif
-                if (lres == PARSE_EOF && ctx->parser_state <= PS_START) {
-                    res = PARSE_EMPTY;
+                if (lres == MRKHTTP_PARSE_EOF && ctx->parser_state <= PS_START) {
+                    res = MRKHTTP_PARSE_EMPTY;
                 } else {
-                    res = 0;
+                    res = MRKHTTP_PARSE_CONSUME_DATA_ERROR;
                 }
                 break;
             }
@@ -785,8 +783,8 @@ _http_parse_message(int fd,
             ctx->parser_state = PS_LINE;
 
         } else if (ctx->parser_state == PS_LINE) {
-            if ((res = parse_line_cb(ctx, in, NULL)) == PARSE_NEED_MORE) {
-                //TRACE("parse_line_cb() returned PARSE_NEED_MORE");
+            if ((res = parse_line_cb(ctx, in, NULL)) == MRKHTTP_PARSE_NEED_MORE) {
+                //TRACE("parse_line_cb() returned MRKHTTP_PARSE_NEED_MORE");
                 continue;
             } else if (res != 0) {
                 //TRACE("parse_line_cb() returned %d", res);
@@ -800,7 +798,7 @@ _http_parse_message(int fd,
             }
 
             //TRACE("after line_cb() parser_state=%s", PSSTR(ctx->parser_state));
-            res = PARSE_NEED_MORE;
+            res = MRKHTTP_PARSE_NEED_MORE;
 
         } else if (ctx->parser_state == PS_HEADER_FIELD_IN) {
             ctx->current_header_name.start = SPOS(in);
@@ -817,7 +815,7 @@ _http_parse_message(int fd,
                                 SEOD(in) -
                                 ctx->current_header_name.start)) == NULL) {
 
-                /* PARSE_NEED_MORE */
+                /* MRKHTTP_PARSE_NEED_MORE */
                 //TRACE("SEOD=%ld SPOS=%ld", SEOD(in), SPOS(in));
                 SADVANCEPOS(in, SEOD(in) - SPOS(in));
                 continue;
@@ -858,7 +856,7 @@ _http_parse_message(int fd,
                 *end = '\0';
 
                 if ((res = process_header(ctx, in)) != 0) {
-                    if (res != PARSE_NEED_MORE) {
+                    if (res != MRKHTTP_PARSE_NEED_MORE) {
                         TRRET(HTTP_PARSE_MESSAGE + 10);
                     }
                 }
@@ -878,7 +876,7 @@ _http_parse_message(int fd,
 
 BODY_IN:
             if ((res = process_body(ctx, in, body_cb, udata)) != 0) {
-                if (res != PARSE_NEED_MORE) {
+                if (res != MRKHTTP_PARSE_NEED_MORE) {
                     TRRET(HTTP_PARSE_MESSAGE + 12);
                 }
             }
@@ -889,7 +887,7 @@ BODY_IN:
 
         } else if (ctx->parser_state == PS_BODY) {
             if ((res = process_body(ctx, in, body_cb, udata)) != 0) {
-                if (res != PARSE_NEED_MORE) {
+                if (res != MRKHTTP_PARSE_NEED_MORE) {
                     TRRET(HTTP_PARSE_MESSAGE + 13);
                 }
             }
@@ -903,8 +901,6 @@ BODY_IN:
         }
         //TRACE("res=%d", res);
     }
-
-    http_ctx_fini(ctx);
 
     TRRET(res);
 }

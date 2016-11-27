@@ -67,7 +67,7 @@ _mycb(int argc, void **argv)
 static int
 mycb(mrkapp_tcp_server_t *srv, mrkthr_socket_t *sock, UNUSED void *udata)
 {
-    mrkthr_spawn(NULL, _mycb, 3, srv, sock->fd, udata);
+    (void)MRKTHR_SPAWN(NULL, _mycb, srv, sock->fd, udata);
     return 0;
 }
 
@@ -112,8 +112,8 @@ main(int argc, char **argv)
         FAIL("main");
     }
     mrkthr_init();
-    mrkthr_spawn("test1", test1, 1, argv[1]);
-    mrkthr_spawn("test2", test2, 0);
+    (void)MRKTHR_SPAWN("test1", test1, argv[1]);
+    (void)MRKTHR_SPAWN("test2", test2);
     mrkthr_loop();
     mrkthr_fini();
     return 0;
