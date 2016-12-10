@@ -110,7 +110,7 @@ http_urldecode(char *s)
 
 
 void
-http_ctx_init(http_ctx_t *ctx)
+http_ctx_init(mnhttp_ctx_t *ctx)
 {
     ctx->parser_state = PS_START;
     ctx->chunk_parser_state = 0;
@@ -136,7 +136,7 @@ http_ctx_init(http_ctx_t *ctx)
 
 
 void
-http_ctx_fini(http_ctx_t *ctx)
+http_ctx_fini(mnhttp_ctx_t *ctx)
 {
     if (ctx->request_uri != NULL) {
         free(ctx->request_uri);
@@ -147,7 +147,7 @@ http_ctx_fini(http_ctx_t *ctx)
 
 
 void
-http_ctx_dump(const http_ctx_t *ctx)
+http_ctx_dump(const mnhttp_ctx_t *ctx)
 {
     TRACE("PS=%s CPS=%s f=%d l=%ld/%ld HTTP/%d.%d %d "
           "hn=%ld/%ld hv=%ld/%ld b=%d,%ld/%ld c=%d,%ld/%ld udata=%p",
@@ -174,12 +174,12 @@ http_ctx_dump(const http_ctx_t *ctx)
 }
 
 
-http_ctx_t *
+mnhttp_ctx_t *
 http_ctx_new(void)
 {
-    http_ctx_t *ctx;
+    mnhttp_ctx_t *ctx;
 
-    if ((ctx = malloc(sizeof(http_ctx_t))) == NULL) {
+    if ((ctx = malloc(sizeof(mnhttp_ctx_t))) == NULL) {
         FAIL("malloc");
     }
     http_ctx_init(ctx);
@@ -188,7 +188,7 @@ http_ctx_new(void)
 
 
 void
-http_ctx_destroy(http_ctx_t **ctx)
+http_ctx_destroy(mnhttp_ctx_t **ctx)
 {
     if (*ctx != NULL) {
         http_ctx_fini(*ctx);
@@ -199,7 +199,7 @@ http_ctx_destroy(http_ctx_t **ctx)
 
 
 int
-http_start_request(bytestream_t *out,
+http_start_request(mnbytestream_t *out,
                    const char *method,
                    const char *uri)
 {
@@ -214,7 +214,7 @@ http_start_request(bytestream_t *out,
 
 
 int
-http_start_response(bytestream_t *out,
+http_start_response(mnbytestream_t *out,
                     int reason,
                     const char *phrase)
 {
@@ -229,7 +229,7 @@ http_start_response(bytestream_t *out,
 
 
 int
-http_add_header_field(bytestream_t *out,
+http_add_header_field(mnbytestream_t *out,
                 const char *name,
                 const char *value)
 {
@@ -258,7 +258,7 @@ http_add_header_field(bytestream_t *out,
 
 
 int
-http_end_of_header(bytestream_t *out)
+http_end_of_header(mnbytestream_t *out)
 {
     int res = 0;
 
@@ -272,7 +272,7 @@ http_end_of_header(bytestream_t *out)
 
 
 int
-http_add_body(bytestream_t *out, const char *body, size_t sz)
+http_add_body(mnbytestream_t *out, const char *body, size_t sz)
 {
     int res = 0;
 
@@ -335,7 +335,7 @@ findnosp(char *s, int sz)
 
 
 static int
-process_header(http_ctx_t *ctx, bytestream_t *in)
+process_header(mnhttp_ctx_t *ctx, mnbytestream_t *in)
 {
 #ifdef TRRET_DEBUG
     TRACE("current_header_name=%s",
@@ -366,7 +366,7 @@ process_header(http_ctx_t *ctx, bytestream_t *in)
 
 
 void
-recycle_stream_buffer(http_ctx_t *ctx, bytestream_t *in)
+recycle_stream_buffer(mnhttp_ctx_t *ctx, mnbytestream_t *in)
 {
     off_t recycled;
 
@@ -387,8 +387,8 @@ recycle_stream_buffer(http_ctx_t *ctx, bytestream_t *in)
 
 
 static int
-process_body(http_ctx_t *ctx,
-             bytestream_t *in,
+process_body(mnhttp_ctx_t *ctx,
+             mnbytestream_t *in,
              http_cb_t body_cb,
              void *udata)
 {
@@ -556,7 +556,7 @@ parse_method(char *s, size_t sz)
 
 
 static int
-parse_request_line(http_ctx_t *ctx, bytestream_t *in, UNUSED void *udata)
+parse_request_line(mnhttp_ctx_t *ctx, mnbytestream_t *in, UNUSED void *udata)
 {
     char *end, *tmp, *tmp1;
     size_t sz;
@@ -661,7 +661,7 @@ parse_request_line(http_ctx_t *ctx, bytestream_t *in, UNUSED void *udata)
 
 
 static int
-parse_status_line(http_ctx_t *ctx, bytestream_t *in, UNUSED void *udata)
+parse_status_line(mnhttp_ctx_t *ctx, mnbytestream_t *in, UNUSED void *udata)
 {
     char *end, *tmp, *tmp1;
 
@@ -743,7 +743,7 @@ parse_status_line(http_ctx_t *ctx, bytestream_t *in, UNUSED void *udata)
 
 static int
 _http_parse_message(int fd,
-                    bytestream_t *in,
+                    mnbytestream_t *in,
                     http_cb_t parse_line_cb,
                     http_cb_t line_cb,
                     http_cb_t header_cb,
@@ -751,7 +751,7 @@ _http_parse_message(int fd,
                     void *udata)
 {
     int res = MRKHTTP_PARSE_NEED_MORE;
-    http_ctx_t *ctx = in->udata;
+    mnhttp_ctx_t *ctx = in->udata;
 
     while (res == MRKHTTP_PARSE_NEED_MORE) {
 
@@ -909,7 +909,7 @@ BODY_IN:
 
 int
 http_parse_request(int fd,
-                   bytestream_t *in,
+                   mnbytestream_t *in,
                    http_cb_t line_cb,
                    http_cb_t header_cb,
                    http_cb_t body_cb,
@@ -920,7 +920,7 @@ http_parse_request(int fd,
 
 int
 http_parse_response(int fd,
-                    bytestream_t *in,
+                    mnbytestream_t *in,
                     http_cb_t line_cb,
                     http_cb_t header_cb,
                     http_cb_t body_cb,

@@ -17,7 +17,7 @@ const char *_malloc_options = "AJ";
 
 
 static int
-myline(http_ctx_t *ctx, UNUSED bytestream_t *bs, UNUSED void *udata)
+myline(mnhttp_ctx_t *ctx, UNUSED mnbytestream_t *bs, UNUSED void *udata)
 {
     CTRACE("method=%d request uri=%s", ctx->code.method, ctx->request_uri);
     return 0;
@@ -25,7 +25,7 @@ myline(http_ctx_t *ctx, UNUSED bytestream_t *bs, UNUSED void *udata)
 
 
 static int
-mybody(http_ctx_t *ctx, bytestream_t *bs, UNUSED void *udata)
+mybody(mnhttp_ctx_t *ctx, mnbytestream_t *bs, UNUSED void *udata)
 {
     size_t sz;
 
@@ -36,7 +36,7 @@ mybody(http_ctx_t *ctx, bytestream_t *bs, UNUSED void *udata)
 
 
 static int
-myheader(http_ctx_t *ctx, bytestream_t *bs, UNUSED void *udata)
+myheader(mnhttp_ctx_t *ctx, mnbytestream_t *bs, UNUSED void *udata)
 {
     size_t sz;
 
@@ -55,8 +55,8 @@ _mycb(int argc, void **argv)
     mrkapp_tcp_server_t *srv;
     int fd;
     UNUSED void *udata;
-    bytestream_t in, out;
-    http_ctx_t *ctx;
+    mnbytestream_t in, out;
+    mnhttp_ctx_t *ctx;
 
     assert(argc == 3);
 
