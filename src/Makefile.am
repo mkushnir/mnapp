@@ -29,7 +29,7 @@ libmrkapp_la_CFLAGS = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 @MRKCOMMON_L
 libmrkapp_la_LDFLAGS = -version-info 0:0:0 -L$(libdir) -lmrkcommon @MRKCOMMON_LOCAL_LDFLAGS@ -lmrkthr @MRKTHR_LOCAL_LDFLAGS@
 
 diag.c diag.h: diag.txt
-	$(AM_V_GEN) sh ./gen-diag mrkapp
+	$(AM_V_GEN) cat diag.txt | sort -u | /bin/sh ./gen-diag mrkapp
 
 run: all
 	for i in $(bin_PROGRAMS); do if test -x ./$$i; then LD_LIBRARY_PATH=$(libdir) ./$$i; fi; done;
