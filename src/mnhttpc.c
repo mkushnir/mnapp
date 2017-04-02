@@ -73,7 +73,7 @@ mnhttpc_request_init(mnhttpc_request_t *req)
 {
     STQUEUE_ENTRY_INIT(link, req);
     req->connection = NULL;
-    mrkthr_signal_init(&req->recv_signal, NULL);
+    MRKTHR_SIGNAL_INIT(&req->recv_signal);
     req->out_body_cb = NULL;
     req->out_body_cb_udata = NULL;
     req->in_body_cb = NULL;
@@ -239,6 +239,23 @@ mnhttpc_connection_cmp(mnhttpc_connection_t *a, mnhttpc_connection_t *b)
 
 
 static void
+mnhttpc_connection_close(mnhttpc_connection_t *conn)
+{
+    if (conn->fd != -1) {
+        close(conn->fd);
+        conn->fd = -1;
+    }
+    if (conn->send_thread != NULL) {
+        mrkthr_set_interrupt_and_join(conn->send_thread);
+    }
+
+    if (conn->recv_thread != NULL) {
+        mrkthr_set_interrupt_and_join(conn->recv_thread);
+    }
+}
+
+
+static void
 mnhttpc_connection_fini(mnhttpc_connection_t *conn)
 {
     mnhttpc_request_t *req;
@@ -254,13 +271,7 @@ mnhttpc_connection_fini(mnhttpc_connection_t *conn)
         mnhttpc_request_destroy(&req);
     }
 
-    if (conn->send_thread != NULL) {
-        mrkthr_set_interrupt_and_join(conn->send_thread);
-    }
-
-    if (conn->recv_thread != NULL) {
-        mrkthr_set_interrupt_and_join(conn->recv_thread);
-    }
+    mnhttpc_connection_close(conn);
 
     mrkthr_sema_fini(&conn->reqfin_sema);
 
@@ -300,7 +311,7 @@ mnhttpc_connection_init(mnhttpc_connection_t *conn)
     if (MRKUNLIKELY(bytestream_init(&conn->in, 4096) != 0)) {
         FAIL("bytestrem_init");
     }
-    mrkthr_signal_init(&conn->send_signal, NULL);
+    MRKTHR_SIGNAL_INIT(&conn->send_signal);
     conn->in.read_more = mrkthr_bytestream_read_more;
     if (MRKUNLIKELY(bytestream_init(&conn->out, 4096) != 0)) {
         FAIL("bytestrem_init");
@@ -349,7 +360,7 @@ mnhttpc_connection_send_worker(UNUSED int argc, void **argv)
 
     }
 
-    CTRACE("Exiting ...");
+    //CTRACE("Exiting ...");
     mrkthr_signal_fini(&conn->send_signal);
     mrkthr_decabac(conn->send_thread);
     conn->send_thread = NULL;
@@ -391,6 +402,30 @@ mnhttpc_response_header_cb(UNUSED mnhttp_ctx_t *ctx,
 }
 
 
+UNUSED static int
+mnhttpc_response_in_body_cb_wrap(mnhttp_ctx_t *ctx,
+                                 mnbytestream_t *bs,
+                                 mnhttpc_request_t *req)
+{
+    int res;
+
+    res = 0;
+    if (req->in_body_cb != NULL) {
+        if (ctx->chunk_parser_state == PS_CHUNK_DATA) {
+            if (ctx->current_chunk_size == 0) {
+                /* last chunk */
+            } else {
+            }
+            res = req->in_body_cb(ctx, bs, req);
+        } else {
+            res = req->in_body_cb(ctx, bs, req);
+        }
+    }
+
+    return res;
+}
+
+
 static int
 mnhttpc_connection_recv_worker(UNUSED int argc, void **argv)
 {
@@ -400,6 +435,7 @@ mnhttpc_connection_recv_worker(UNUSED int argc, void **argv)
     conn = argv[0];
 
     while (true) {
+        int res;
         mnhttpc_request_t *req;
 
         if (mrkthr_wait_for_read(conn->fd) != 0) {
@@ -409,12 +445,21 @@ mnhttpc_connection_recv_worker(UNUSED int argc, void **argv)
             mnhttp_ctx_t ctx;
 
             http_ctx_init(&ctx);
-            CTRACE("no request ready");
+            //CTRACE("no request ready");
+            conn->in.udata = &ctx;
+            res = http_parse_response(conn->fd,
+                                      &conn->in,
+                                      mnhttpc_response_line_cb,
+                                      mnhttpc_response_header_cb,
+                                      NULL,
+                                      NULL);
+            conn->in.udata = NULL;
             http_ctx_fini(&ctx);
+            if (res != 0) {
+                break;
+            };
 
         } else {
-            int res;
-
             STQUEUE_DEQUEUE(&conn->requests, link);
             STQUEUE_ENTRY_FINI(link, req);
 
@@ -423,6 +468,7 @@ mnhttpc_connection_recv_worker(UNUSED int argc, void **argv)
                                       &conn->in,
                                       mnhttpc_response_line_cb,
                                       mnhttpc_response_header_cb,
+                                      //mnhttpc_response_in_body_cb_wrap,
                                       (mnhttp_cb_t)req->in_body_cb,
                                       req);
             conn->in.udata = NULL;
@@ -434,7 +480,7 @@ mnhttpc_connection_recv_worker(UNUSED int argc, void **argv)
         }
 
     }
-    CTRACE("Exiting ...");
+    //CTRACE("Exiting ...");
     mrkthr_decabac(conn->recv_thread);
     conn->recv_thread = NULL;
     return 0;
@@ -468,6 +514,20 @@ mnhttpc_connection_connect(mnhttpc_connection_t *conn)
 }
 
 
+static int
+mnhttpc_connection_ensure_connected(mnhttpc_connection_t *conn)
+{
+    if (conn->send_thread != NULL && conn->recv_thread != NULL) {
+        return 0;
+    }
+    mnhttpc_connection_close(conn);
+    return mnhttpc_connection_connect(conn);
+}
+
+
+/*
+ * mnhttpc_t
+ */
 void
 mnhttpc_init(mnhttpc_t *cli)
 {
@@ -521,10 +581,10 @@ mnhttpc_get_new(mnhttpc_t *cli,
     if ((hit = hash_get_item(&cli->connections, &probe)) == NULL) {
         conn = mnhttpc_connection_new(req->request.out.uri.host,
                                       req->request.out.uri.port);
-        if (mnhttpc_connection_connect(conn) != 0) {
-            mnhttpc_connection_destroy(&conn);
-            goto err;
-        }
+        //if (mnhttpc_connection_connect(conn) != 0) {
+        //    mnhttpc_connection_destroy(&conn);
+        //    goto err;
+        //}
         hash_set_item(&cli->connections, conn, NULL);
     } else {
         conn = hit->key;
@@ -542,7 +602,6 @@ err:
 }
 
 
-
 int
 mnhttpc_request_finalize(mnhttpc_request_t *req)
 {
@@ -558,9 +617,15 @@ mnhttpc_request_finalize(mnhttpc_request_t *req)
     assert(conn != NULL);
 
     res = 0;
+
     if (mrkthr_sema_acquire(&conn->reqfin_sema) != 0) {
         res = -1;
         goto end1;
+    }
+
+    if (mnhttpc_connection_ensure_connected(conn) != 0) {
+        res = -1;
+        goto end0;
     }
 
     if (http_start_request(
@@ -605,7 +670,7 @@ mnhttpc_request_finalize(mnhttpc_request_t *req)
     //D16(SDATA(&conn->in, 0), SEOD(&conn->in));
     //bytestream_rewind(&conn->in);
 
-//end0:
+end0:
     mrkthr_sema_release(&conn->reqfin_sema);
 
 end1:

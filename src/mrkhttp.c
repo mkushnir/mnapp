@@ -626,6 +626,7 @@ process_header(mnhttp_ctx_t *ctx, mnbytestream_t *in)
 
             ctx->flags |= PS_FLAG_CHUNKED;
             ctx->chunk_parser_state = PS_CHUNK_SIZE;
+            ctx->bodysz = 0;
         }
     }
 
@@ -680,6 +681,7 @@ process_body(mnhttp_ctx_t *ctx,
             }
             ctx->current_chunk_size = strtol(SDATA(in,
                         ctx->current_chunk.start), &tmp, 16);
+            ctx->bodysz += ctx->current_chunk_size;
 
             if (tmp != end || ctx->current_chunk_size  < 0) {
                 //D32(SDATA(in, ctx->current_chunk.start), 32);
@@ -723,6 +725,8 @@ process_body(mnhttp_ctx_t *ctx,
                 //D32(SDATA(in, ctx->current_chunk.start),
                 //    ctx->current_chunk.end - ctx->current_chunk.start);
 
+                //ctx->bodysz += ctx->current_chunk.end -
+                //               ctx->current_chunk.start;
                 if (body_cb != NULL) {
                     if (body_cb(ctx, in, udata) != 0) {
                         TRRET(PROCESS_BODY + 2);

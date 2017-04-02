@@ -178,6 +178,8 @@ do {                                                           \
 } while (0)                                                    \
 
 
+void http_ctx_dump(const mnhttp_ctx_t *);
+
 int http_end_of_header(mnbytestream_t *);
 int http_add_body(mnbytestream_t *, const char *, size_t);
 
