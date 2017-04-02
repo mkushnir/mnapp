@@ -121,6 +121,7 @@ void mnhttpc_init(mnhttpc_t *);
 void mnhttpc_fini(mnhttpc_t *);
 mnhttpc_t *mnhttpc_new(void);
 void mnhttpc_destroy(mnhttpc_t **);
+void mnhttpc_gc(mnhttpc_t *);
 
 
 #ifdef __cplusplus

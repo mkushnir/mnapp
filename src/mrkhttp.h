@@ -2,6 +2,7 @@
 #define MRKHTTP_H
 
 #include <stdarg.h>
+#include <stdbool.h>
 #include <time.h>
 #include "mrkcommon/bytes.h"
 #include "mrkcommon/bytestream.h"
@@ -121,6 +122,7 @@ mnhttp_ctx_t *http_ctx_new(void);
 void http_ctx_destroy(mnhttp_ctx_t **);
 
 typedef int (*mnhttp_cb_t) (mnhttp_ctx_t *, mnbytestream_t *, void *);
+#define mnhttp_ctx_last_chunk(ctx) ((bool)((ctx)->current_chunk_size == 0))
 
 char *http_urlencode_reserved(const char *, size_t);
 char *http_urldecode(char *);

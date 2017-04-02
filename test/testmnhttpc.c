@@ -22,7 +22,7 @@ in_body_cb_ignore(UNUSED mnhttp_ctx_t *ctx,
 {
     UNUSED mnbytes_t *ct;
 
-    http_ctx_dump(ctx);
+    //http_ctx_dump(ctx);
     //CTRACE("current_chunk size %ld - %ld = %ld",
     //       ctx->current_chunk.end,
     //       ctx->current_chunk.start,
@@ -30,12 +30,15 @@ in_body_cb_ignore(UNUSED mnhttp_ctx_t *ctx,
 
     //D16(SDATA(bs, ctx->current_chunk.start),
     //    ctx->current_chunk.end - ctx->current_chunk.start);
+    if (mnhttp_ctx_last_chunk(ctx)) {
+        CTRACE("received %d bytes of body", ctx->bodysz);
+    }
     return 0;
 }
 
 
 static void
-run1(mnhttpc_t *cli, mnbytes_t *uri)
+run_uri(mnhttpc_t *cli, mnbytes_t *uri)
 {
     mnhttpc_request_t *req;
     mnhash_item_t *hit;
@@ -69,7 +72,29 @@ end:
     mnhttpc_request_destroy(&req);
 }
 
-static int
+
+UNUSED static int
+run1(UNUSED int argc, UNUSED void **argv)
+{
+    int i;
+    mnhttpc_t cli;
+    BYTES_ALLOCA(uri2, "http://example.org/");
+
+    mnhttpc_init(&cli);
+
+    for (i = 0; i < 5; ++i) {
+        run_uri(&cli, uri2);
+        if (mrkthr_sleep(2000) != 0) {
+            break;
+        }
+    }
+
+    mnhttpc_fini(&cli);
+    return 0;
+
+}
+
+UNUSED static int
 run0(UNUSED int argc, UNUSED void **argv)
 {
     mnhttpc_t cli;
@@ -85,10 +110,14 @@ run0(UNUSED int argc, UNUSED void **argv)
         BYTES_ALLOCA(uri1, "http://localhost/100m.dat");
         BYTES_ALLOCA(uri2, "http://example.org/");
 
-        run1(&cli, uri0);
-        run1(&cli, uri1);
-        run1(&cli, uri2);
+        run_uri(&cli, uri0);
+        run_uri(&cli, uri1);
+        run_uri(&cli, uri2);
 
+        if (mrkthr_sleep(5000) != 0) {
+            break;
+        }
+        mnhttpc_gc(&cli);
         if (mrkthr_sleep(ts) != 0) {
             break;
         }
@@ -108,6 +137,7 @@ main(UNUSED int argc, UNUSED char **argv)
 {
     mrkthr_init();
     MRKTHR_SPAWN("run0", run0);
+    MRKTHR_SPAWN("run1", run1);
     mrkthr_loop();
     mrkthr_fini();
 }

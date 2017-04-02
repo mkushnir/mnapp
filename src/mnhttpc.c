@@ -311,8 +311,8 @@ mnhttpc_connection_init(mnhttpc_connection_t *conn)
     if (MRKUNLIKELY(bytestream_init(&conn->in, 4096) != 0)) {
         FAIL("bytestrem_init");
     }
-    MRKTHR_SIGNAL_INIT(&conn->send_signal);
     conn->in.read_more = mrkthr_bytestream_read_more;
+    MRKTHR_SIGNAL_INIT(&conn->send_signal);
     if (MRKUNLIKELY(bytestream_init(&conn->out, 4096) != 0)) {
         FAIL("bytestrem_init");
     }
@@ -522,6 +522,47 @@ mnhttpc_connection_ensure_connected(mnhttpc_connection_t *conn)
     }
     mnhttpc_connection_close(conn);
     return mnhttpc_connection_connect(conn);
+}
+
+
+static int
+mnhttpc_connection_gc(mnhttpc_connection_t *conn,
+                      UNUSED void *value,
+                      UNUSED void *udata)
+{
+    int res;
+
+    res = 0;
+    if (mrkthr_sema_acquire(&conn->reqfin_sema) != 0) {
+        res = -1;
+        goto end;
+    }
+
+    bytestream_fini(&conn->in);
+    bytestream_fini(&conn->out);
+
+    if (MRKUNLIKELY(bytestream_init(&conn->in, 4096) != 0)) {
+        FAIL("bytestrem_init");
+    }
+    conn->in.read_more = mrkthr_bytestream_read_more;
+    if (MRKUNLIKELY(bytestream_init(&conn->out, 4096) != 0)) {
+        FAIL("bytestrem_init");
+    }
+    conn->out.write = mrkthr_bytestream_write;
+
+    mrkthr_sema_release(&conn->reqfin_sema);
+
+end:
+    return res;
+}
+
+
+void
+mnhttpc_gc(mnhttpc_t *cli)
+{
+    (void)hash_traverse(&cli->connections,
+                        (hash_traverser_t)mnhttpc_connection_gc,
+                        NULL);
 }
 
 
