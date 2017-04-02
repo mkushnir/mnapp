@@ -90,17 +90,6 @@ AC_FUNC_FORK
 AC_CHECK_FUNCS([dup2 memset socket memchr strcasecmp strchr strdup strncasecmp strstr strtol])
 
 
-configure.ac: warning: missing AC_CHECK_FUNCS([memchr]) wanted by: src/mrkhttp.c:1112
-configure.ac: warning: missing AC_CHECK_FUNCS([strcasecmp]) wanted by: src/mrkhttp.c:615
-configure.ac: warning: missing AC_CHECK_FUNCS([strchr]) wanted by: src/local_server.c:129
-configure.ac: warning: missing AC_CHECK_FUNCS([strdup]) wanted by: src/local_server.c:138
-configure.ac: warning: missing AC_CHECK_FUNCS([strncasecmp]) wanted by: src/mrkhttp.c:795
-configure.ac: warning: missing AC_CHECK_FUNCS([strstr]) wanted by: src/mrkhttp.c:156
-configure.ac: warning: missing AC_CHECK_FUNCS([strtol]) wanted by: src/mrkhttp.c:618
-configure.ac: warning: missing AC_CHECK_HEADERS([sys/file.h]) wanted by: src/daemonize.c:5
-configure.ac: warning: missing AC_CHECK_HEADER_STDBOOL wanted by: src/mrkapp.h:28
-configure.ac: warning: missing AC_TYPE_SSIZE_T wanted by: src/mrkhttp.c:751
-configure.ac: warning: missing AC_TYPE_UINT64_T wanted by: src/mnhttpc.h:70
 
 
 AC_CHECK_MEMBER([struct sockaddr_un.sun_len],
