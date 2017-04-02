@@ -1,7 +1,9 @@
 #ifndef MRKHTTP_H
 #define MRKHTTP_H
 
+#include <stdarg.h>
 #include <time.h>
+#include "mrkcommon/bytes.h"
 #include "mrkcommon/bytestream.h"
 
 #ifdef __cplusplus
@@ -38,7 +40,7 @@ extern "C" {
  "<ext>")                              \
 
 
-typedef struct _http_ctx {
+typedef struct _mnhttp_ctx {
 #define PS_START 1
 #define PS_LINE 2
 #define PS_HEADER_FIELD_IN 3
@@ -90,14 +92,35 @@ typedef struct _http_ctx {
 } mnhttp_ctx_t;
 
 
+/*
+ * https://tools.ietf.org/html/rfc3986
+ */
+typedef struct _mrkhttp_uri {
+#define MNHTTPC_MESSAGE_SCHEME_UNDEF    (-1)
+#define MNHTTPC_MESSAGE_SCHEME_HTTP     (0)
+#define MNHTTPC_MESSAGE_SCHEME_HTTPS    (1)
+    int scheme;
+    mnbytes_t *user;
+    mnbytes_t *password;
+    mnbytes_t *host;
+    mnbytes_t *port;
+    mnbytes_t *relative;
+    mnbytes_t *path;
+    mnbytes_t *qstring;
+    mnbytes_t *fragment;
+} mrkhttp_uri_t;
+
+
 char *findcrlf(char *, int);
 
 void http_ctx_init(mnhttp_ctx_t *);
 void http_ctx_fini(mnhttp_ctx_t *);
+void mrkhttp_uri_init(mrkhttp_uri_t *);
+void mrkhttp_uri_fini(mrkhttp_uri_t *);
 mnhttp_ctx_t *http_ctx_new(void);
 void http_ctx_destroy(mnhttp_ctx_t **);
 
-typedef int (*http_cb_t) (mnhttp_ctx_t *, mnbytestream_t *, void *);
+typedef int (*mnhttp_cb_t) (mnhttp_ctx_t *, mnbytestream_t *, void *);
 
 char *http_urlencode_reserved(const char *, size_t);
 char *http_urldecode(char *);
@@ -105,6 +128,12 @@ char *http_urldecode(char *);
 int http_start_request(mnbytestream_t *, const char *, const char *);
 int http_start_response(mnbytestream_t *, int, const char *);
 int http_add_header_field(mnbytestream_t *, const char *, const char *);
+int PRINTFLIKE(3, 4) http_field_addf(mnbytestream_t *,
+                                     mnbytes_t *,
+                                     const char *,
+                                     ...);
+int http_field_addb(mnbytestream_t *, mnbytes_t *, mnbytes_t *);
+int http_field_addt(mnbytestream_t *, mnbytes_t *, time_t);
 
 
 #define MRKHTTP_PRINTF_HEADER(out, name, fmt, ...)                             \
@@ -154,17 +183,19 @@ int http_add_body(mnbytestream_t *, const char *, size_t);
 
 int http_parse_request(int,
                        mnbytestream_t *,
-                       http_cb_t,
-                       http_cb_t,
-                       http_cb_t,
+                       mnhttp_cb_t,
+                       mnhttp_cb_t,
+                       mnhttp_cb_t,
                        void *);
 
 int http_parse_response(int,
                         mnbytestream_t *,
-                        http_cb_t,
-                        http_cb_t,
-                        http_cb_t,
+                        mnhttp_cb_t,
+                        mnhttp_cb_t,
+                        mnhttp_cb_t,
                         void *);
+
+void mrkhttp_uri_parse(mrkhttp_uri_t *, const char *);
 
 #ifdef __cplusplus
 }

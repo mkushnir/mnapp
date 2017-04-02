@@ -1,4 +1,6 @@
+#include <assert.h>
 #include <errno.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -106,6 +108,213 @@ http_urldecode(char *s)
     }
 
     return dst;
+}
+
+
+void
+mrkhttp_uri_init(mrkhttp_uri_t *uri)
+{
+    uri->scheme = MNHTTPC_MESSAGE_SCHEME_UNDEF;
+    uri->user = NULL;
+    uri->password = NULL;
+    uri->host = NULL;
+    uri->port = NULL;
+    uri->relative = NULL;
+    uri->path = NULL;
+    uri->qstring = NULL;
+    uri->fragment = NULL;
+}
+
+
+void
+mrkhttp_uri_fini(mrkhttp_uri_t *uri)
+{
+    BYTES_DECREF(&uri->user);
+    BYTES_DECREF(&uri->password);
+    BYTES_DECREF(&uri->host);
+    BYTES_DECREF(&uri->port);
+    BYTES_DECREF(&uri->relative);
+    BYTES_DECREF(&uri->path);
+    BYTES_DECREF(&uri->qstring);
+    BYTES_DECREF(&uri->fragment);
+}
+
+
+void
+mrkhttp_uri_parse(mrkhttp_uri_t *uri, const char *s)
+{
+    const char *p0, *p1;
+    const char *puser,
+               *phost,
+               *pport,
+               *ppath,
+               *pqstring,
+               *pfragment;
+
+    p0 = s;
+    p1 = s;
+    if (strstr(p0, "http://") == p0) {
+        uri->scheme = MNHTTPC_MESSAGE_SCHEME_HTTP;
+        p0 += 7;
+    } else if (strstr(p0, "https://") == p0) {
+        uri->scheme = MNHTTPC_MESSAGE_SCHEME_HTTPS;
+        p0 += 8;
+    } else {
+        /*
+         * will see port conventions;
+         */
+    }
+
+    if ((ppath = strchr(p0, '/')) != NULL) {
+        assert(uri->relative == NULL);
+        uri->relative = bytes_new_from_str(ppath);
+        BYTES_INCREF(uri->relative);
+        if ((pqstring = strchr(ppath, '?')) != NULL) {
+            ++pqstring;
+            if ((pfragment = strchr(pqstring, '#')) != NULL) {
+                assert(uri->qstring == NULL);
+                uri->qstring = bytes_new_from_str_len(
+                    pqstring, pfragment - pqstring);
+                BYTES_INCREF(uri->qstring);
+                assert(uri->fragment == NULL);
+                uri->fragment = bytes_new_from_str(pfragment);
+                BYTES_INCREF(uri->fragment);
+            } else {
+                /* no fragment */
+                assert(uri->qstring == NULL);
+                uri->qstring = bytes_new_from_str(pqstring);
+                BYTES_INCREF(uri->qstring);
+            }
+            assert(uri->path == NULL);
+            uri->path = bytes_new_from_str_len(ppath, pqstring - ppath - 1);
+            BYTES_INCREF(uri->path);
+        } else {
+            /* no qstring */
+            if ((pfragment = strchr(ppath, '#')) != NULL) {
+                assert(uri->fragment == NULL);
+                uri->fragment = bytes_new_from_str(pfragment);
+                BYTES_INCREF(uri->fragment);
+                assert(uri->path == NULL);
+                uri->path = bytes_new_from_str_len(ppath, pfragment - ppath);
+                BYTES_INCREF(uri->path);
+            } else {
+                assert(uri->path == NULL);
+                uri->path = bytes_new_from_str(ppath);
+                BYTES_INCREF(uri->path);
+            }
+        }
+
+        if ((phost = strchr(p0, '@')) != NULL && phost < ppath) {
+            if ((puser = strchr(p0, ':')) != NULL && puser < phost) {
+                assert(uri->user == NULL);
+                uri->user = bytes_new_from_str_len(p0, puser - p0);
+                BYTES_INCREF(uri->user);
+                ++puser;
+                assert(uri->password == NULL);
+                uri->password = bytes_new_from_str_len(puser, phost - puser);
+                BYTES_INCREF(uri->password);
+            } else {
+                assert(uri->user == NULL);
+                uri->user = bytes_new_from_str_len(p0, phost - p0);
+                BYTES_INCREF(uri->user);
+            }
+            ++phost;
+            if ((pport = strchr(phost, ':')) != NULL && pport < ppath) {
+                assert(uri->host == NULL);
+                uri->host = bytes_new_from_str_len(phost, pport - phost);
+                BYTES_INCREF(uri->host);
+                ++pport;
+                assert(uri->port == NULL);
+                uri->port = bytes_new_from_str_len(pport, ppath - pport);
+                BYTES_INCREF(uri->port);
+            } else {
+                assert(uri->host == NULL);
+                uri->host = bytes_new_from_str_len(phost, ppath - phost);
+                BYTES_INCREF(uri->host);
+            }
+
+        } else {
+            if ((pport = strchr(p0, ':')) != NULL && pport < ppath) {
+                assert(uri->host == NULL);
+                uri->host = bytes_new_from_str_len(p0, pport - p0);
+                BYTES_INCREF(uri->host);
+                ++pport;
+                assert(uri->port == NULL);
+                uri->port = bytes_new_from_str_len(pport, ppath - pport);
+                BYTES_INCREF(uri->port);
+            } else {
+                assert(uri->host == NULL);
+                uri->host = bytes_new_from_str_len(p0, ppath - p0);
+                BYTES_INCREF(uri->host);
+            }
+        }
+    } else {
+        /* no path, qstring */
+        if ((phost = strchr(p0, '@')) != NULL) {
+            if ((puser = strchr(p0, ':')) != NULL && puser < phost) {
+                assert(uri->user == NULL);
+                uri->user = bytes_new_from_str_len(p0, puser - p0);
+                BYTES_INCREF(uri->user);
+                ++puser;
+                assert(uri->password == NULL);
+                uri->password = bytes_new_from_str_len(puser, phost - puser);
+                BYTES_INCREF(uri->password);
+            } else {
+                assert(uri->user == NULL);
+                uri->user = bytes_new_from_str_len(p0, phost - p0);
+                BYTES_INCREF(uri->user);
+            }
+            ++phost;
+            if ((pport = strchr(phost, ':')) != NULL) {
+                assert(uri->host == NULL);
+                uri->host = bytes_new_from_str_len(phost, pport - phost);
+                BYTES_INCREF(uri->host);
+                ++pport;
+                assert(uri->port == NULL);
+                uri->port = bytes_new_from_str(pport);
+                BYTES_INCREF(uri->port);
+            } else {
+                assert(uri->host == NULL);
+                uri->host = bytes_new_from_str(phost);
+                BYTES_INCREF(uri->host);
+            }
+
+        } else {
+            if ((pport = strchr(p0, ':')) != NULL) {
+                assert(uri->host == NULL);
+                uri->host = bytes_new_from_str_len(p0, pport - p0);
+                BYTES_INCREF(uri->host);
+                ++pport;
+                assert(uri->port == NULL);
+                uri->port = bytes_new_from_str(pport);
+                BYTES_INCREF(uri->port);
+            } else {
+                assert(uri->host == NULL);
+                uri->host = bytes_new_from_str(p0);
+                BYTES_INCREF(uri->host);
+            }
+        }
+    }
+    if (bytes_is_null_or_empty(uri->port)) {
+        BYTES_DECREF(&uri->port);
+        if (uri->scheme == MNHTTPC_MESSAGE_SCHEME_HTTPS) {
+            assert(uri->port == NULL);
+            uri->port = bytes_new_from_str("443");
+            BYTES_INCREF(uri->port);
+        } else {
+            assert(uri->port == NULL);
+            uri->port = bytes_new_from_str("80");
+            BYTES_INCREF(uri->port);
+        }
+    }
+    if (uri->scheme == MNHTTPC_MESSAGE_SCHEME_UNDEF) {
+        BYTES_ALLOCA(https, "443");
+        if (bytes_cmp(uri->port, https) == 0) {
+            uri->scheme = MNHTTPC_MESSAGE_SCHEME_HTTPS;
+        } else {
+            uri->scheme = MNHTTPC_MESSAGE_SCHEME_HTTP;
+        }
+    }
 }
 
 
@@ -230,8 +439,8 @@ http_start_response(mnbytestream_t *out,
 
 int
 http_add_header_field(mnbytestream_t *out,
-                const char *name,
-                const char *value)
+                      const char *name,
+                      const char *value)
 {
     int res = 0;
     size_t sz;
@@ -255,6 +464,65 @@ http_add_header_field(mnbytestream_t *out,
     }
     TRRET(res);
 }
+
+
+int PRINTFLIKE(3, 4)
+http_field_addf(mnbytestream_t *out,
+                mnbytes_t *name,
+                const char *fmt,
+                ...)
+{
+    int res;
+    mnbytes_t *value;
+    assert(name != NULL);
+    va_list ap;
+
+    va_start(ap, fmt);
+    value = bytes_vprintf(fmt, ap);
+    va_end(ap);
+    res = http_add_header_field(out,
+                                (char *)BDATA(name),
+                                (char *)BDATA(value));
+    BYTES_DECREF(&value);
+    return res;
+}
+
+
+int
+http_field_addb(mnbytestream_t *out,
+                mnbytes_t *name,
+                mnbytes_t *value)
+{
+    assert(name != NULL);
+    assert(value != NULL);
+    return http_add_header_field(out,
+                                 (char *)BDATA(name),
+                                 (char *)BDATA(value));
+}
+
+
+int
+http_field_addt(mnbytestream_t *out,
+                mnbytes_t *name,
+                time_t t)
+{
+    int res;
+    mnbytes_t *value;
+    size_t n;
+    char buf[64];
+    struct tm *tv;
+
+    tv = gmtime(&t);
+    n = strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT",
+                 tv);
+    value = bytes_new_from_str_len(buf, n);
+    res = http_add_header_field(out,
+                                (char *)BDATA(name),
+                                (char *)BDATA(value));
+    BYTES_DECREF(&value);
+    return res;
+}
+
 
 
 int
@@ -389,7 +657,7 @@ recycle_stream_buffer(mnhttp_ctx_t *ctx, mnbytestream_t *in)
 static int
 process_body(mnhttp_ctx_t *ctx,
              mnbytestream_t *in,
-             http_cb_t body_cb,
+             mnhttp_cb_t body_cb,
              void *udata)
 {
     //TRACE("flags=%d body sz=%d start=%ld end=%ld",
@@ -744,10 +1012,10 @@ parse_status_line(mnhttp_ctx_t *ctx, mnbytestream_t *in, UNUSED void *udata)
 static int
 _http_parse_message(int fd,
                     mnbytestream_t *in,
-                    http_cb_t parse_line_cb,
-                    http_cb_t line_cb,
-                    http_cb_t header_cb,
-                    http_cb_t body_cb,
+                    mnhttp_cb_t parse_line_cb,
+                    mnhttp_cb_t line_cb,
+                    mnhttp_cb_t header_cb,
+                    mnhttp_cb_t body_cb,
                     void *udata)
 {
     int res = MRKHTTP_PARSE_NEED_MORE;
@@ -910,9 +1178,9 @@ BODY_IN:
 int
 http_parse_request(int fd,
                    mnbytestream_t *in,
-                   http_cb_t line_cb,
-                   http_cb_t header_cb,
-                   http_cb_t body_cb,
+                   mnhttp_cb_t line_cb,
+                   mnhttp_cb_t header_cb,
+                   mnhttp_cb_t body_cb,
                    void *udata)
 {
     return _http_parse_message(fd, in, parse_request_line, line_cb, header_cb, body_cb, udata);
@@ -921,9 +1189,9 @@ http_parse_request(int fd,
 int
 http_parse_response(int fd,
                     mnbytestream_t *in,
-                    http_cb_t line_cb,
-                    http_cb_t header_cb,
-                    http_cb_t body_cb,
+                    mnhttp_cb_t line_cb,
+                    mnhttp_cb_t header_cb,
+                    mnhttp_cb_t body_cb,
                     void *udata)
 {
     return _http_parse_message(fd, in, parse_status_line, line_cb, header_cb, body_cb, udata);

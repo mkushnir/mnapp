@@ -1,0 +1,613 @@
+#include <stdbool.h>
+#include <time.h> /* time_t */
+
+#include <mrkcommon/fasthash.h>
+
+#include <mnhttpc.h>
+
+#include "diag.h"
+#include "config.h" /* PACKAGE, VERSION */
+
+
+static int
+mnhttpc_request_header_item_fini(mnbytes_t *name, mnbytes_t *value)
+{
+    BYTES_DECREF(&name);
+    BYTES_DECREF(&value);
+    return 0;
+}
+
+
+static void
+mnhttpc_message_init_out(mnhttpc_message_t *msg)
+{
+    msg->out.method = NULL;
+    mrkhttp_uri_init(&msg->out.uri);
+    msg->out.content_type = NULL;
+    hash_init(&msg->out.headers, 17,
+              (hash_hashfn_t)bytes_hash,
+              (hash_item_comparator_t)bytes_cmp,
+              (hash_item_finalizer_t)mnhttpc_request_header_item_fini);
+    msg->out.content_length = 0;
+    msg->out.flags.keepalive = 1;
+}
+
+
+static void
+mnhttpc_message_fini_out(mnhttpc_message_t *msg)
+{
+    msg->out.method = NULL;
+    mrkhttp_uri_fini(&msg->out.uri);
+    BYTES_DECREF(&msg->out.content_type);
+    hash_fini(&msg->out.headers);
+    msg->out.content_length = 0;
+    msg->out.flags.keepalive = 1;
+}
+
+
+static void
+mnhttpc_message_init_in(mnhttpc_message_t *msg)
+{
+    http_ctx_init(&msg->in.ctx);
+    msg->in.content_type = NULL;
+    hash_init(&msg->in.headers, 17,
+              (hash_hashfn_t)bytes_hash,
+              (hash_item_comparator_t)bytes_cmp,
+              (hash_item_finalizer_t)mnhttpc_request_header_item_fini);
+    msg->in.flags.keepalive = 1;
+}
+
+
+static void
+mnhttpc_message_fini_in(mnhttpc_message_t *msg)
+{
+    http_ctx_fini(&msg->in.ctx);
+    BYTES_DECREF(&msg->in.content_type);
+    hash_fini(&msg->in.headers);
+    msg->in.flags.keepalive = 1;
+}
+
+
+static void
+mnhttpc_request_init(mnhttpc_request_t *req)
+{
+    STQUEUE_ENTRY_INIT(link, req);
+    req->connection = NULL;
+    mrkthr_signal_init(&req->recv_signal, NULL);
+    req->out_body_cb = NULL;
+    req->out_body_cb_udata = NULL;
+    req->in_body_cb = NULL;
+    mnhttpc_message_init_out(&req->request);
+    mnhttpc_message_init_in(&req->response);
+}
+
+
+static mnhttpc_request_t *
+mnhttpc_request_new(void)
+{
+    mnhttpc_request_t *req;
+
+    if (MRKUNLIKELY((req = malloc(sizeof(mnhttpc_request_t))) == NULL)) {
+        FAIL("malloc");
+    }
+    mnhttpc_request_init(req);
+
+    return req;
+}
+
+
+static void
+mnhttpc_request_fini(mnhttpc_request_t *req)
+{
+    mnhttpc_message_fini_out(&req->request);
+    mnhttpc_message_fini_in(&req->response);
+    req->connection = NULL;
+    req->out_body_cb = NULL;
+    req->out_body_cb_udata = NULL;
+    req->in_body_cb = NULL;
+    STQUEUE_ENTRY_FINI(link, req);
+}
+
+
+void
+mnhttpc_request_destroy(mnhttpc_request_t **req)
+{
+    if (*req != NULL) {
+        mnhttpc_request_fini(*req);
+        free(*req);
+        *req = NULL;
+    }
+}
+
+
+int
+mnhttpc_request_out_field_addb(mnhttpc_request_t *req,
+                               mnbytes_t *name,
+                               mnbytes_t *value)
+{
+    assert(name != NULL);
+    assert(value != NULL);
+
+    hash_set_item(&req->request.out.headers, name, value);
+    BYTES_INCREF(name);
+    BYTES_INCREF(value);
+    return 0;
+}
+
+
+int
+mnhttpc_request_out_field_addt(mnhttpc_request_t *req,
+                               mnbytes_t *name,
+                               time_t t)
+{
+    mnbytes_t *value;
+    size_t n;
+    char buf[64];
+    struct tm *tv;
+
+    assert(name != NULL);
+
+    tv = gmtime(&t);
+    n = strftime(buf, sizeof(buf), "%a, %d %b %Y %H:%M:%S GMT",
+                 tv);
+    value = bytes_new_from_str_len(buf, n);
+
+    hash_set_item(&req->request.out.headers, name, value);
+    BYTES_INCREF(name);
+    BYTES_INCREF(value);
+    return 0;
+}
+
+
+int PRINTFLIKE(3, 4)
+mnhttpc_request_out_field_addf(mnhttpc_request_t *req,
+                               mnbytes_t *name,
+                               const char *fmt,
+                           ...)
+{
+    mnbytes_t *value;
+    assert(name != NULL);
+    va_list ap;
+
+    va_start(ap, fmt);
+    value = bytes_vprintf(fmt, ap);
+    va_end(ap);
+
+    hash_set_item(&req->request.out.headers, name, value);
+    BYTES_INCREF(name);
+    BYTES_INCREF(value);
+    return 0;
+}
+
+
+mnbytes_t *
+mnhttpc_request_out_header(mnhttpc_request_t *req, mnbytes_t *name)
+{
+    mnhash_item_t *hit;
+    mnbytes_t *value;
+    value = NULL;
+    if ((hit = hash_get_item(&req->request.out.headers, name)) != NULL) {
+        value = hit->value;
+    }
+    return value;
+}
+
+
+mnbytes_t *
+mnhttpc_request_in_header(mnhttpc_request_t *req, mnbytes_t *name)
+{
+    mnhash_item_t *hit;
+    mnbytes_t *value;
+    value = NULL;
+    if ((hit = hash_get_item(&req->response.in.headers, name)) != NULL) {
+        value = hit->value;
+    }
+    return value;
+}
+
+
+static uint64_t
+mnhttpc_connection_hash(mnhttpc_connection_t *conn)
+{
+    if (conn->hash == 0) {
+        if (conn->host != NULL) {
+            conn->hash = bytes_hash(conn->host);
+        }
+        if (conn->port != NULL) {
+            union {
+                uint64_t i;
+                unsigned char c;
+            } u;
+
+            u.i = bytes_hash(conn->port);
+            conn->hash = fasthash(conn->hash, &u.c, sizeof(uint64_t));
+        }
+    }
+    return conn->hash;
+}
+
+
+static int
+mnhttpc_connection_cmp(mnhttpc_connection_t *a, mnhttpc_connection_t *b)
+{
+    uint64_t ha, hb;
+
+    ha = mnhttpc_connection_hash(a);
+    hb = mnhttpc_connection_hash(b);
+    return ha > hb ? 1 : ha < hb ? -1 : 0;
+}
+
+
+static void
+mnhttpc_connection_fini(mnhttpc_connection_t *conn)
+{
+    mnhttpc_request_t *req;
+
+    conn->hash = 0;
+    BYTES_DECREF(&conn->host);
+    BYTES_DECREF(&conn->port);
+    conn->fd = -1;
+
+    while ((req = STQUEUE_HEAD(&conn->requests)) != NULL) {
+        STQUEUE_DEQUEUE(&conn->requests, link);
+        STQUEUE_ENTRY_FINI(link, req);
+        mnhttpc_request_destroy(&req);
+    }
+
+    if (conn->send_thread != NULL) {
+        mrkthr_set_interrupt_and_join(conn->send_thread);
+    }
+
+    if (conn->recv_thread != NULL) {
+        mrkthr_set_interrupt_and_join(conn->recv_thread);
+    }
+
+    mrkthr_sema_fini(&conn->reqfin_sema);
+
+    bytestream_fini(&conn->in);
+    bytestream_fini(&conn->out);
+}
+
+
+static void
+mnhttpc_connection_destroy(mnhttpc_connection_t **conn)
+{
+    if (*conn != NULL) {
+        mnhttpc_connection_fini(*conn);
+        free(*conn);
+        *conn = NULL;
+    }
+}
+
+
+static int
+mnhttpc_connection_item_fini(mnhttpc_connection_t *conn, UNUSED void *value)
+{
+    mnhttpc_connection_destroy(&conn);
+    return 0;
+}
+
+static void
+mnhttpc_connection_init(mnhttpc_connection_t *conn)
+{
+    conn->hash = 0;
+    conn->host = NULL;
+    conn->port = NULL;
+    conn->fd = -1;
+    conn->send_thread = NULL;
+    conn->recv_thread = NULL;
+    mrkthr_sema_init(&conn->reqfin_sema, 1);
+    if (MRKUNLIKELY(bytestream_init(&conn->in, 4096) != 0)) {
+        FAIL("bytestrem_init");
+    }
+    mrkthr_signal_init(&conn->send_signal, NULL);
+    conn->in.read_more = mrkthr_bytestream_read_more;
+    if (MRKUNLIKELY(bytestream_init(&conn->out, 4096) != 0)) {
+        FAIL("bytestrem_init");
+    }
+    conn->out.write = mrkthr_bytestream_write;
+    STQUEUE_INIT(&conn->requests);
+}
+
+
+static mnhttpc_connection_t *
+mnhttpc_connection_new(mnbytes_t *host, mnbytes_t *port)
+{
+    mnhttpc_connection_t *conn;
+
+    if (MRKUNLIKELY((conn = malloc(sizeof(mnhttpc_connection_t))) == NULL)) {
+        FAIL("malloc");
+    }
+    mnhttpc_connection_init(conn);
+    conn->host = host;
+    BYTES_INCREF(host);
+    conn->port = port;
+    BYTES_INCREF(port);
+    return conn;
+}
+
+
+static int
+mnhttpc_connection_send_worker(UNUSED int argc, void **argv)
+{
+    mnhttpc_connection_t *conn;
+
+    assert(argc == 1);
+    conn = argv[0];
+
+    while (true) {
+        //D16(SDATA(&conn->out, 0), SEOD(&conn->out));
+        if (bytestream_produce_data(&conn->out, conn->fd) != 0) {
+            break;
+        }
+
+        bytestream_rewind(&conn->out);
+
+        if (mrkthr_signal_subscribe(&conn->send_signal) != 0) {
+            break;
+        }
+
+    }
+
+    CTRACE("Exiting ...");
+    mrkthr_signal_fini(&conn->send_signal);
+    mrkthr_decabac(conn->send_thread);
+    conn->send_thread = NULL;
+
+    return 0;
+}
+
+
+static int
+mnhttpc_response_line_cb(UNUSED mnhttp_ctx_t *ctx,
+                         UNUSED mnbytestream_t *bs,
+                         void *udata)
+{
+    UNUSED mnhttpc_request_t *req = udata;
+    //CTRACE("version %d./%d code %d", ctx->version_major, ctx->version_minor, ctx->code.status);
+    return 0;
+}
+
+
+static int
+mnhttpc_response_header_cb(UNUSED mnhttp_ctx_t *ctx,
+                           UNUSED mnbytestream_t *bs,
+                           void *udata)
+{
+    mnhttpc_request_t *req = udata;
+    mnbytes_t *name, *value;
+
+    name = bytes_new_from_str(SDATA(bs, ctx->current_header_name.start));
+    name = bytes_set_lower(name);
+    BYTES_INCREF(name);
+    value = bytes_new_from_str(SDATA(bs, ctx->current_header_value.start));
+    BYTES_INCREF(value);
+    hash_set_item(&req->response.in.headers, name, value);
+
+    //CTRACE("current header %s - %s",
+    //       SDATA(bs, ctx->current_header_name.start),
+    //       SDATA(bs, ctx->current_header_value.start));
+    return 0;
+}
+
+
+static int
+mnhttpc_connection_recv_worker(UNUSED int argc, void **argv)
+{
+    mnhttpc_connection_t *conn;
+
+    assert(argc == 1);
+    conn = argv[0];
+
+    while (true) {
+        mnhttpc_request_t *req;
+
+        if (mrkthr_wait_for_read(conn->fd) != 0) {
+            break;
+        }
+        if ((req = STQUEUE_HEAD(&conn->requests)) == NULL) {
+            mnhttp_ctx_t ctx;
+
+            http_ctx_init(&ctx);
+            CTRACE("no request ready");
+            http_ctx_fini(&ctx);
+
+        } else {
+            int res;
+
+            STQUEUE_DEQUEUE(&conn->requests, link);
+            STQUEUE_ENTRY_FINI(link, req);
+
+            conn->in.udata = &req->response.in.ctx;
+            res = http_parse_response(conn->fd,
+                                      &conn->in,
+                                      mnhttpc_response_line_cb,
+                                      mnhttpc_response_header_cb,
+                                      (mnhttp_cb_t)req->in_body_cb,
+                                      req);
+            conn->in.udata = NULL;
+            mrkthr_signal_send(&req->recv_signal);
+
+            if (res != 0) {
+                break;
+            }
+        }
+
+    }
+    CTRACE("Exiting ...");
+    mrkthr_decabac(conn->recv_thread);
+    conn->recv_thread = NULL;
+    return 0;
+}
+
+
+static int
+mnhttpc_connection_connect(mnhttpc_connection_t *conn)
+{
+    int res;
+
+    assert(conn->host != NULL && conn->port != NULL);
+
+    res = 0;
+    if ((conn->fd = mrkthr_socket_connect(
+                (char *)BDATA(conn->host),
+                (char *)BDATA(conn->port),
+                AF_UNSPEC)) == -1) {
+        res = MRKHTTPC_CONNECTION_CONNECT + 1;
+    }
+    conn->send_thread = MRKTHR_SPAWN(
+            "httpsnd",
+            mnhttpc_connection_send_worker, conn);
+    mrkthr_incabac(conn->send_thread);
+    conn->recv_thread = MRKTHR_SPAWN(
+            "httprcv",
+            mnhttpc_connection_recv_worker, conn);
+    mrkthr_incabac(conn->recv_thread);
+
+    TRRET(res);
+}
+
+
+void
+mnhttpc_init(mnhttpc_t *cli)
+{
+    hash_init(&cli->connections, 127,
+              (hash_hashfn_t)mnhttpc_connection_hash,
+              (hash_item_comparator_t)mnhttpc_connection_cmp,
+              (hash_item_finalizer_t)mnhttpc_connection_item_fini);
+}
+
+
+void
+mnhttpc_fini(mnhttpc_t *cli)
+{
+    hash_fini(&cli->connections);
+}
+
+
+mnhttpc_request_t *
+mnhttpc_get_new(mnhttpc_t *cli,
+                mnbytes_t *uri,
+                mnhttpc_response_body_cb_t in_body_cb)
+{
+    mnhttpc_request_t *req;
+    mnhash_item_t *hit;
+    mnhttpc_connection_t *conn, probe;
+
+    req = mnhttpc_request_new();
+    req->request.out.method = MNHTTPC_MESSAGE_METHOD_GET;
+    req->in_body_cb = in_body_cb;
+    mrkhttp_uri_parse(&req->request.out.uri, (char *)BDATA(uri));
+
+    if (bytes_is_null_or_empty(req->request.out.uri.host)) {
+        goto err;
+    }
+
+    if (bytes_is_null_or_empty(req->request.out.uri.port)) {
+        goto err;
+    }
+
+    if (bytes_is_null_or_empty(req->request.out.uri.relative)) {
+        goto err;
+    }
+
+    if (bytes_is_null_or_empty(req->request.out.uri.path)) {
+        goto err;
+    }
+
+    probe.hash = 0;
+    probe.host = req->request.out.uri.host;
+    probe.port = req->request.out.uri.port;
+    if ((hit = hash_get_item(&cli->connections, &probe)) == NULL) {
+        conn = mnhttpc_connection_new(req->request.out.uri.host,
+                                      req->request.out.uri.port);
+        if (mnhttpc_connection_connect(conn) != 0) {
+            mnhttpc_connection_destroy(&conn);
+            goto err;
+        }
+        hash_set_item(&cli->connections, conn, NULL);
+    } else {
+        conn = hit->key;
+    }
+    assert(bytes_cmp(conn->host, req->request.out.uri.host) == 0);
+    assert(bytes_cmp(conn->port, req->request.out.uri.port) == 0);
+    req->connection = conn;
+
+end:
+    return req;
+
+err:
+    mnhttpc_request_destroy(&req);
+    goto end;
+}
+
+
+
+int
+mnhttpc_request_finalize(mnhttpc_request_t *req)
+{
+    int res;
+    mnhttpc_connection_t *conn;
+    BYTES_ALLOCA(_host, "Host");
+    BYTES_ALLOCA(_user_agent, "User-Agent");
+    BYTES_ALLOCA(_date, "Date");
+    mnhash_item_t *hit;
+    mnhash_iter_t it;
+
+    conn = req->connection;
+    assert(conn != NULL);
+
+    res = 0;
+    if (mrkthr_sema_acquire(&conn->reqfin_sema) != 0) {
+        res = -1;
+        goto end1;
+    }
+
+    if (http_start_request(
+                &conn->out,
+                req->request.out.method,
+                (char *)BDATA(req->request.out.uri.relative)) == 0) {
+    } else {
+    }
+
+    (void)http_field_addt(&conn->out, _date, MRKTHR_GET_NOW_SEC());
+    (void)http_field_addf(&conn->out,
+                          _host,
+                          "%s:%s",
+                          BDATA(req->request.out.uri.host),
+                          BDATA(req->request.out.uri.port));
+    (void)http_field_addf(&conn->out,
+                          _user_agent,
+                          "%s/%s",
+                          PACKAGE,
+                          VERSION);
+    for (hit = hash_first(&req->request.out.headers, &it);
+         hit != NULL;
+         hit = hash_next(&req->request.out.headers, &it)) {
+        mnbytes_t *name;
+        mnbytes_t *value;
+
+        name = hit->key;
+        value = hit->value;
+        (void)http_field_addb(&conn->out, name, value);
+    }
+
+    (void)http_end_of_header(&conn->out);
+
+    if (req->out_body_cb != NULL) {
+        (void)req->out_body_cb(&conn->out, req->out_body_cb_udata);
+    }
+
+    STQUEUE_ENQUEUE(&conn->requests, link, req);
+    mrkthr_signal_send(&conn->send_signal);
+    res = mrkthr_signal_subscribe(&req->recv_signal);
+
+    //D16(SDATA(&conn->in, 0), SEOD(&conn->in));
+    //bytestream_rewind(&conn->in);
+
+//end0:
+    mrkthr_sema_release(&conn->reqfin_sema);
+
+end1:
+    return res;
+}
