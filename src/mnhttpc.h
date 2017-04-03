@@ -4,6 +4,8 @@
 #include <stdarg.h>
 #include <time.h> /* time_t */
 
+#include <openssl/ssl.h>
+
 #include <mrkcommon/bytes.h>
 #include <mrkcommon/bytestream.h>
 #include <mrkcommon/hash.h>
@@ -28,8 +30,7 @@ typedef union _mnhttpc_message {
 #define MNHTTPC_MESSAGE_METHOD_OPTIONS  "OPTIONS"
         const char *method; /* weak */
         mrkhttp_uri_t uri;
-        mnbytes_t *content_type;
-        mnhash_t headers;
+        mnbytes_t *content_type; mnhash_t headers;
         size_t content_length;
         struct {
             int keepalive:1;
@@ -71,6 +72,9 @@ typedef struct _mnhttpc_connection {
     mnbytes_t *host;
     mnbytes_t *port;
     int fd; /* connect socket */
+    void *fp; /* connect socket */
+    SSL_CTX *sslctx;
+    SSL *ssl;
 
     mrkthr_ctx_t *send_thread;
     mrkthr_sema_t reqfin_sema;

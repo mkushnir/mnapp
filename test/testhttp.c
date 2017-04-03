@@ -75,13 +75,13 @@ _mycb(int argc, void **argv)
     in.udata = ctx;
     out.write = mrkthr_bytestream_write;
 
-    res = http_parse_request(fd, &in, myline, myheader, mybody, NULL);
+    res = http_parse_request((void *)(intptr_t)fd, &in, myline, myheader, mybody, NULL);
     CTRACE("http_parse_request() res=%d", res);
     (void)http_start_response(&out, 200, "OKK");
     (void)http_end_of_header(&out);
     (void)http_add_body(&out, "test\n", 5);
 
-    res = bytestream_produce_data(&out, fd);
+    res = bytestream_produce_data(&out, (void *)(intptr_t)fd);
     CTRACE("bytesteam_produce_data() res=%d", res);
 
     bytestream_fini(&in);

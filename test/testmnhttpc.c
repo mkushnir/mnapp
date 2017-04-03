@@ -1,5 +1,8 @@
 #include <assert.h>
 #include <stdbool.h>
+
+#include <openssl/ssl.h>
+
 #include <mrkcommon/dumpm.h>
 #include <mrkcommon/util.h>
 
@@ -78,11 +81,13 @@ run1(UNUSED int argc, UNUSED void **argv)
 {
     int i;
     mnhttpc_t cli;
-    BYTES_ALLOCA(uri2, "http://example.org/");
+    BYTES_ALLOCA(uri1, "http://example.org/");
+    BYTES_ALLOCA(uri2, "https://example.org/");
 
     mnhttpc_init(&cli);
 
     for (i = 0; i < 5; ++i) {
+        run_uri(&cli, uri1);
         run_uri(&cli, uri2);
         if (mrkthr_sleep(2000) != 0) {
             break;
@@ -135,8 +140,10 @@ run0(UNUSED int argc, UNUSED void **argv)
 int
 main(UNUSED int argc, UNUSED char **argv)
 {
+    SSL_load_error_strings();
+    SSL_library_init();
     mrkthr_init();
-    MRKTHR_SPAWN("run0", run0);
+    //MRKTHR_SPAWN("run0", run0);
     MRKTHR_SPAWN("run1", run1);
     mrkthr_loop();
     mrkthr_fini();

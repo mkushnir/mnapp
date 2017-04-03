@@ -185,14 +185,14 @@ void http_ctx_dump(const mnhttp_ctx_t *);
 int http_end_of_header(mnbytestream_t *);
 int http_add_body(mnbytestream_t *, const char *, size_t);
 
-int http_parse_request(int,
+int http_parse_request(void *,
                        mnbytestream_t *,
                        mnhttp_cb_t,
                        mnhttp_cb_t,
                        mnhttp_cb_t,
                        void *);
 
-int http_parse_response(int,
+int http_parse_response(void *,
                         mnbytestream_t *,
                         mnhttp_cb_t,
                         mnhttp_cb_t,

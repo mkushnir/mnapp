@@ -1013,7 +1013,7 @@ parse_status_line(mnhttp_ctx_t *ctx, mnbytestream_t *in, UNUSED void *udata)
 
 
 static int
-_http_parse_message(int fd,
+_http_parse_message(void *fd,
                     mnbytestream_t *in,
                     mnhttp_cb_t parse_line_cb,
                     mnhttp_cb_t line_cb,
@@ -1179,7 +1179,7 @@ BODY_IN:
 
 
 int
-http_parse_request(int fd,
+http_parse_request(void *fd,
                    mnbytestream_t *in,
                    mnhttp_cb_t line_cb,
                    mnhttp_cb_t header_cb,
@@ -1190,7 +1190,7 @@ http_parse_request(int fd,
 }
 
 int
-http_parse_response(int fd,
+http_parse_response(void *fd,
                     mnbytestream_t *in,
                     mnhttp_cb_t line_cb,
                     mnhttp_cb_t header_cb,

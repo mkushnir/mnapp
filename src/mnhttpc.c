@@ -3,6 +3,7 @@
 
 #include <mrkcommon/fasthash.h>
 
+#include "bytestream_ssl_helper.h"
 #include <mnhttpc.h>
 
 #include "diag.h"
@@ -249,10 +250,16 @@ mnhttpc_connection_close(mnhttpc_connection_t *conn)
         mrkthr_set_interrupt_and_join(conn->recv_thread);
     }
 
+    if (conn->ssl != NULL) {
+        SSL_shutdown(conn->ssl);
+        SSL_free(conn->ssl);
+        conn->ssl = NULL;
+    }
     if (conn->fd != -1) {
         close(conn->fd);
         conn->fd = -1;
     }
+    conn->fp = (void *)(-1);
 }
 
 
@@ -273,6 +280,10 @@ mnhttpc_connection_fini(mnhttpc_connection_t *conn)
 
     mnhttpc_connection_close(conn);
 
+    if (conn->sslctx != NULL) {
+        SSL_CTX_free(conn->sslctx);
+        conn->sslctx = NULL;
+    }
     mrkthr_sema_fini(&conn->reqfin_sema);
 
     bytestream_fini(&conn->in);
@@ -299,37 +310,54 @@ mnhttpc_connection_item_fini(mnhttpc_connection_t *conn, UNUSED void *value)
 }
 
 static void
-mnhttpc_connection_init(mnhttpc_connection_t *conn)
+mnhttpc_connection_init(mnhttpc_connection_t *conn, int scheme)
 {
     conn->hash = 0;
     conn->host = NULL;
     conn->port = NULL;
     conn->fd = -1;
+    conn->fp = (void *)(-1);
     conn->send_thread = NULL;
     conn->recv_thread = NULL;
     mrkthr_sema_init(&conn->reqfin_sema, 1);
     if (MRKUNLIKELY(bytestream_init(&conn->in, 4096) != 0)) {
         FAIL("bytestrem_init");
     }
-    conn->in.read_more = mrkthr_bytestream_read_more;
     MRKTHR_SIGNAL_INIT(&conn->send_signal);
     if (MRKUNLIKELY(bytestream_init(&conn->out, 4096) != 0)) {
         FAIL("bytestrem_init");
     }
-    conn->out.write = mrkthr_bytestream_write;
+
+    if (scheme == MNHTTPC_MESSAGE_SCHEME_HTTPS) {
+        if (MRKUNLIKELY((conn->sslctx = SSL_CTX_new(SSLv23_client_method())) == NULL)) {
+            FAIL("SSL_CTX_new");
+        }
+        conn->ssl = NULL;
+        conn->fp = NULL;
+        conn->in.read_more = bytestream_ssl_recv_more;
+        conn->out.write = bytestream_ssl_send;
+    } else {
+        conn->sslctx = NULL;
+        conn->ssl = NULL;
+        conn->in.read_more = mrkthr_bytestream_read_more;
+        conn->out.write = mrkthr_bytestream_write;
+    }
+
     STQUEUE_INIT(&conn->requests);
 }
 
 
 static mnhttpc_connection_t *
-mnhttpc_connection_new(mnbytes_t *host, mnbytes_t *port)
+mnhttpc_connection_new(mnbytes_t *host,
+                       mnbytes_t *port,
+                       int scheme)
 {
     mnhttpc_connection_t *conn;
 
     if (MRKUNLIKELY((conn = malloc(sizeof(mnhttpc_connection_t))) == NULL)) {
         FAIL("malloc");
     }
-    mnhttpc_connection_init(conn);
+    mnhttpc_connection_init(conn, scheme);
     conn->host = host;
     BYTES_INCREF(host);
     conn->port = port;
@@ -348,7 +376,7 @@ mnhttpc_connection_send_worker(UNUSED int argc, void **argv)
 
     while (true) {
         //D16(SDATA(&conn->out, 0), SEOD(&conn->out));
-        if (bytestream_produce_data(&conn->out, conn->fd) != 0) {
+        if (bytestream_produce_data(&conn->out, conn->fp) != 0) {
             break;
         }
 
@@ -447,7 +475,7 @@ mnhttpc_connection_recv_worker(UNUSED int argc, void **argv)
             http_ctx_init(&ctx);
             //CTRACE("no request ready");
             conn->in.udata = &ctx;
-            res = http_parse_response(conn->fd,
+            res = http_parse_response(conn->fp,
                                       &conn->in,
                                       mnhttpc_response_line_cb,
                                       mnhttpc_response_header_cb,
@@ -464,7 +492,7 @@ mnhttpc_connection_recv_worker(UNUSED int argc, void **argv)
             STQUEUE_ENTRY_FINI(link, req);
 
             conn->in.udata = &req->response.in.ctx;
-            res = http_parse_response(conn->fd,
+            res = http_parse_response(conn->fp,
                                       &conn->in,
                                       mnhttpc_response_line_cb,
                                       mnhttpc_response_header_cb,
@@ -480,12 +508,68 @@ mnhttpc_connection_recv_worker(UNUSED int argc, void **argv)
         }
 
     }
+
     //CTRACE("Exiting ...");
     mrkthr_decabac(conn->recv_thread);
     conn->recv_thread = NULL;
     return 0;
 }
 
+
+#define MNHTTPC_CONNECTION_SSL_ERROR (-0x8000)
+static int
+mnhttpc_connection_ssl_init(UNUSED int argc, void **argv)
+{
+    int res;
+    mnhttpc_connection_t *conn;
+
+    assert(argc == 1);
+    conn = argv[0];
+
+    res = 0;
+    if (conn->sslctx != NULL) {
+        if (MRKUNLIKELY((conn->ssl = SSL_new(conn->sslctx)) == NULL)) {
+            FAIL("SSL_new");
+        }
+        /* reset conn->fp to ssl */
+        conn->fp = conn->ssl;
+        if (MRKUNLIKELY(SSL_set_fd(conn->ssl, conn->fd) != 1)) {
+            FAIL("SSL_set_fd");
+        }
+
+        while (true) {
+            res = SSL_connect(conn->ssl);
+            if (res > 0) {
+                res = 0;
+                break;
+
+            } else {
+                res = SSL_get_error(conn->ssl, res);
+                switch (res) {
+                case SSL_ERROR_WANT_READ:
+                    if ((res = mrkthr_wait_for_read(conn->fd)) != 0) {
+                        goto end;
+                    }
+                    break;
+
+                case SSL_ERROR_WANT_WRITE:
+                    if ((res = mrkthr_wait_for_write(conn->fd)) != 0) {
+                        goto end;
+                    }
+                    break;
+
+                default:
+                    CTRACE("ssl error %d", SSL_get_error(conn->ssl, res));
+                    res = MNHTTPC_CONNECTION_SSL_ERROR;
+                    goto end;
+                }
+            }
+        }
+    }
+
+end:
+    MRKTHRET(res);
+}
 
 static int
 mnhttpc_connection_connect(mnhttpc_connection_t *conn)
@@ -500,7 +584,16 @@ mnhttpc_connection_connect(mnhttpc_connection_t *conn)
                 (char *)BDATA(conn->port),
                 AF_UNSPEC)) == -1) {
         res = MRKHTTPC_CONNECTION_CONNECT + 1;
+
     } else {
+        mrkthr_ctx_t *sslinithread;
+
+        conn->fp = (void *)(intptr_t)conn->fd;
+        sslinithread = MRKTHR_SPAWN("sslinit", mnhttpc_connection_ssl_init, conn);
+        if ((res = mrkthr_join(sslinithread)) != 0) {
+            goto end;
+        }
+
         conn->send_thread = MRKTHR_SPAWN(
                 "httpsnd",
                 mnhttpc_connection_send_worker, conn);
@@ -511,6 +604,7 @@ mnhttpc_connection_connect(mnhttpc_connection_t *conn)
         mrkthr_incabac(conn->recv_thread);
     }
 
+end:
     TRRET(res);
 }
 
@@ -622,7 +716,8 @@ mnhttpc_get_new(mnhttpc_t *cli,
     probe.port = req->request.out.uri.port;
     if ((hit = hash_get_item(&cli->connections, &probe)) == NULL) {
         conn = mnhttpc_connection_new(req->request.out.uri.host,
-                                      req->request.out.uri.port);
+                                      req->request.out.uri.port,
+                                      req->request.out.uri.scheme);
         hash_set_item(&cli->connections, conn, NULL);
     } else {
         conn = hit->key;

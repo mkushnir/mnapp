@@ -9,9 +9,10 @@ lib_LTLIBRARIES = libmrkapp.la
 
 nobase_include_HEADERS = mrkapp.h mrkhttp.h mnhttpc.h
 
-noinst_HEADERS = mrkapp_private.h
+noinst_HEADERS = mrkapp_private.h bytestream_ssl_helper.h
 
 libmrkapp_la_SOURCES = mrkapp.c \
+		       bytestream_ssl_helper.c \
 		       mrkhttp.c \
 		       mnhttpc.c \
 		       local_server.c \
@@ -27,7 +28,7 @@ endif
 
 libmrkapp_la_CFLAGS = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 @MRKCOMMON_LOCAL_CFLAGS@ @MRKTHR_LOCAL_CFLAGS@ @_GNU_SOURCE_MACRO@ -I$(includedir)
 
-libmrkapp_la_LDFLAGS = -version-info 0:0:0 -L$(libdir) -lmrkcommon @MRKCOMMON_LOCAL_LDFLAGS@ -lmrkthr @MRKTHR_LOCAL_LDFLAGS@
+libmrkapp_la_LDFLAGS = -version-info 0:0:0 -lmrkthr @MRKTHR_LOCAL_LDFLAGS@ -lmrkcommon @MRKCOMMON_LOCAL_LDFLAGS@ -L$(libdir) -lz -lcrypto -lssl
 
 diag.c diag.h: diag.txt
 	$(AM_V_GEN) cat diag.txt | sort -u | /bin/sh ./gen-diag mrkapp
