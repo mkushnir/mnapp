@@ -107,7 +107,7 @@ run0(UNUSED int argc, UNUSED void **argv)
         BYTES_ALLOCA(uri0,
                 "http://www.fileformat.info/format//tiff/sample/"
                 "c44cf1326c2240d38e9fca073bd7a805/text.htm");
-        BYTES_ALLOCA(uri1, "http://localhost/100m.dat");
+        BYTES_ALLOCA(uri1, "http://10.1.1.10/100m.dat");
         BYTES_ALLOCA(uri2, "http://example.org/");
 
         run_uri(&cli, uri0);
