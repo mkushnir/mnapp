@@ -61,7 +61,7 @@ run_uri(mnhttpc_t *cli, mnbytes_t *uri)
     for (hit = hash_first(&req->response.in.headers, &it);
          hit != NULL;
          hit = hash_next(&req->response.in.headers, &it)) {
-        mnbytes_t *name, *value;
+        UNUSED mnbytes_t *name, *value;
         name = hit->key;
         value = hit->value;
         //CTRACE("in headers %s = %s", BDATA(name), BDATA(value));

@@ -241,16 +241,17 @@ mnhttpc_connection_cmp(mnhttpc_connection_t *a, mnhttpc_connection_t *b)
 static void
 mnhttpc_connection_close(mnhttpc_connection_t *conn)
 {
-    if (conn->fd != -1) {
-        close(conn->fd);
-        conn->fd = -1;
-    }
     if (conn->send_thread != NULL) {
         mrkthr_set_interrupt_and_join(conn->send_thread);
     }
 
     if (conn->recv_thread != NULL) {
         mrkthr_set_interrupt_and_join(conn->recv_thread);
+    }
+
+    if (conn->fd != -1) {
+        close(conn->fd);
+        conn->fd = -1;
     }
 }
 
@@ -263,7 +264,6 @@ mnhttpc_connection_fini(mnhttpc_connection_t *conn)
     conn->hash = 0;
     BYTES_DECREF(&conn->host);
     BYTES_DECREF(&conn->port);
-    conn->fd = -1;
 
     while ((req = STQUEUE_HEAD(&conn->requests)) != NULL) {
         STQUEUE_DEQUEUE(&conn->requests, link);
@@ -500,15 +500,16 @@ mnhttpc_connection_connect(mnhttpc_connection_t *conn)
                 (char *)BDATA(conn->port),
                 AF_UNSPEC)) == -1) {
         res = MRKHTTPC_CONNECTION_CONNECT + 1;
+    } else {
+        conn->send_thread = MRKTHR_SPAWN(
+                "httpsnd",
+                mnhttpc_connection_send_worker, conn);
+        mrkthr_incabac(conn->send_thread);
+        conn->recv_thread = MRKTHR_SPAWN(
+                "httprcv",
+                mnhttpc_connection_recv_worker, conn);
+        mrkthr_incabac(conn->recv_thread);
     }
-    conn->send_thread = MRKTHR_SPAWN(
-            "httpsnd",
-            mnhttpc_connection_send_worker, conn);
-    mrkthr_incabac(conn->send_thread);
-    conn->recv_thread = MRKTHR_SPAWN(
-            "httprcv",
-            mnhttpc_connection_recv_worker, conn);
-    mrkthr_incabac(conn->recv_thread);
 
     TRRET(res);
 }
@@ -622,10 +623,6 @@ mnhttpc_get_new(mnhttpc_t *cli,
     if ((hit = hash_get_item(&cli->connections, &probe)) == NULL) {
         conn = mnhttpc_connection_new(req->request.out.uri.host,
                                       req->request.out.uri.port);
-        //if (mnhttpc_connection_connect(conn) != 0) {
-        //    mnhttpc_connection_destroy(&conn);
-        //    goto err;
-        //}
         hash_set_item(&cli->connections, conn, NULL);
     } else {
         conn = hit->key;

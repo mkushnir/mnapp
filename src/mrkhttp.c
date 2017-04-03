@@ -143,7 +143,7 @@ mrkhttp_uri_fini(mrkhttp_uri_t *uri)
 void
 mrkhttp_uri_parse(mrkhttp_uri_t *uri, const char *s)
 {
-    const char *p0, *p1;
+    const char *p0;
     const char *puser,
                *phost,
                *pport,
@@ -152,7 +152,6 @@ mrkhttp_uri_parse(mrkhttp_uri_t *uri, const char *s)
                *pfragment;
 
     p0 = s;
-    p1 = s;
     if (strstr(p0, "http://") == p0) {
         uri->scheme = MNHTTPC_MESSAGE_SCHEME_HTTP;
         p0 += 7;
