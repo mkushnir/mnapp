@@ -22,12 +22,7 @@ extern "C" {
 typedef union _mnhttpc_message {
     /* request */
     struct {
-#define MNHTTPC_MESSAGE_METHOD_GET      "GET"
-#define MNHTTPC_MESSAGE_METHOD_HEAD     "HEAD"
-#define MNHTTPC_MESSAGE_METHOD_POST     "POST"
-#define MNHTTPC_MESSAGE_METHOD_PUT      "PUT"
-#define MNHTTPC_MESSAGE_METHOD_DELETE   "DELETE"
-#define MNHTTPC_MESSAGE_METHOD_OPTIONS  "OPTIONS"
+        /* MRKHTTP_METHOD_ */
         const char *method; /* weak */
         mrkhttp_uri_t uri;
         mnbytes_t *content_type; mnhash_t headers;

@@ -691,7 +691,7 @@ mnhttpc_get_new(mnhttpc_t *cli,
     mnhttpc_connection_t *conn, probe;
 
     req = mnhttpc_request_new();
-    req->request.out.method = MNHTTPC_MESSAGE_METHOD_GET;
+    req->request.out.method = MRKHTTP_METHOD_GET;
     req->in_body_cb = in_body_cb;
     mrkhttp_uri_parse(&req->request.out.uri, (char *)BDATA(uri));
 

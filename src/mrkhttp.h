@@ -19,26 +19,39 @@ extern "C" {
 #define MRKHTTP_PARSE_EMPTY (-4)
 #define MRKHTTP_PARSE_CONSUME_DATA_ERROR (-5)
 
-#define MRKHTTP_MOPTIONS (1)
-#define MRKHTTP_MGET (2)
-#define MRKHTTP_MHEAD (3)
-#define MRKHTTP_MPOST (4)
-#define MRKHTTP_MPUT (5)
-#define MRKHTTP_MDELETE (6)
-#define MRKHTTP_MTRACE (7)
-#define MRKHTTP_MCONNECT (8)
-#define MRKHTTP_MEXT (9)
+#define MRKHTTP_MOPTIONS    (1)
+#define MRKHTTP_METHOD_OPTIONS  "OPTIONS"
+#define MRKHTTP_MGET        (2)
+#define MRKHTTP_METHOD_GET      "GET"
+#define MRKHTTP_MHEAD       (3)
+#define MRKHTTP_METHOD_HEAD     "HEAD"
+#define MRKHTTP_MPOST       (4)
+#define MRKHTTP_METHOD_POST     "POST"
+#define MRKHTTP_MPUT        (5)
+#define MRKHTTP_METHOD_PUT      "PUT"
+#define MRKHTTP_MDELETE     (6)
+#define MRKHTTP_METHOD_DELETE   "DELETE"
+#define MRKHTTP_MTRACE      (7)
+#define MRKHTTP_METHOD_TRACE    "TRACE"
+#define MRKHTTP_MCONNECT    (8)
+#define MRKHTTP_METHOD_CONNECT  "CONNECT"
+/* MS Graph API*/
+#define MRKHTTP_MPATCH      (9)
+#define MRKHTTP_METHOD_PATCH    "PATCH"
 
-#define MRKHTTP_MSTR(m)                \
-((m) == MRKHTTP_MOPTIONS ? "OPTIONS":  \
- (m) == MRKHTTP_MGET ? "GET":          \
- (m) == MRKHTTP_MHEAD ? "HEAD":        \
- (m) == MRKHTTP_MPOST ? "POST":        \
- (m) == MRKHTTP_MPUT ? "PUT":          \
- (m) == MRKHTTP_MDELETE ? "DELETE":    \
- (m) == MRKHTTP_MTRACE ? "TRACE":      \
- (m) == MRKHTTP_MCONNECT ? "CONNECT":  \
- "<ext>")                              \
+#define MRKHTTP_MEXT        (10)
+
+#define MRKHTTP_MSTR(m)                                \
+((m) == MRKHTTP_MOPTIONS ? MRKHTTP_METHOD_OPTIONS:     \
+ (m) == MRKHTTP_MGET ? MRKHTTP_METHOD_GET:             \
+ (m) == MRKHTTP_MHEAD ? MRKHTTP_METHOD_HEAD:           \
+ (m) == MRKHTTP_MPOST ? MRKHTTP_METHOD_POST:           \
+ (m) == MRKHTTP_MPUT ? MRKHTTP_METHOD_PUT:             \
+ (m) == MRKHTTP_MDELETE ? MRKHTTP_METHOD_DELETE:       \
+ (m) == MRKHTTP_MTRACE ? MRKHTTP_METHOD_TRACE:         \
+ (m) == MRKHTTP_MCONNECT ? MRKHTTP_METHOD_CONNECT:     \
+ (m) == MRKHTTP_MPATCH ? MRKHTTP_METHOD_PATCH:         \
+ "<ext>")                                              \
 
 
 typedef struct _mnhttp_ctx {
