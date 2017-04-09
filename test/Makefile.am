@@ -30,7 +30,7 @@ testhttpuri_LDFLAGS = -L$(top_srcdir)/src/.libs -lmrkapp
 
 testmnhttpc_SOURCES = testmnhttpc.c
 testmnhttpc_CFLAGS = @_GNU_SOURCE_MACRO@ $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
-testmnhttpc_LDFLAGS = -L$(top_srcdir)/src/.libs -lmrkapp
+testmnhttpc_LDFLAGS = -L$(top_srcdir)/src/.libs -lmrkapp -lssl
 
 testrun: all
 	for i in $(noinst_PROGRAMS); do if test -x ./$$i; then LD_LIBRARY_PATH=$(libdir) ./$$i; fi; done;
