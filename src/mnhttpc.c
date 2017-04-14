@@ -735,6 +735,15 @@ err:
 }
 
 
+void
+mnhttpc_request_out_qterm_addb(mnhttpc_request_t *req,
+                               mnbytes_t *name,
+                               mnbytes_t *value)
+{
+    mrkhttp_uri_add_qterm(&req->request.out.uri, name, value);
+}
+
+
 int
 mnhttpc_request_finalize(mnhttpc_request_t *req)
 {
@@ -761,11 +770,13 @@ mnhttpc_request_finalize(mnhttpc_request_t *req)
         goto end0;
     }
 
-    if (http_start_request(
+    if (mrkhttp_uri_start_request(
+                &req->request.out.uri,
                 &conn->out,
-                req->request.out.method,
-                (char *)BDATA(req->request.out.uri.relative)) == 0) {
+                req->request.out.method) == 0) {
     } else {
+        res = -1;
+        goto end0;
     }
 
     (void)http_field_addt(&conn->out, _date, MRKTHR_GET_NOW_SEC());

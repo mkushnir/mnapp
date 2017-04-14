@@ -6,6 +6,8 @@
 
 //#define TRRET_DEBUG
 #include <mrkcommon/dumpm.h>
+#include <mrkcommon/bytes.h>
+#include <mrkcommon/hash.h>
 #include <mrkcommon/bytestream.h>
 #include <mrkcommon/util.h>
 
@@ -111,6 +113,15 @@ http_urldecode(char *s)
 }
 
 
+static int
+mrkhttp_uri_qterm_fini(mnbytes_t *key, mnbytes_t *value)
+{
+    BYTES_DECREF(&key);
+    BYTES_DECREF(&value);
+    return 0;
+}
+
+
 void
 mrkhttp_uri_init(mrkhttp_uri_t *uri)
 {
@@ -123,6 +134,11 @@ mrkhttp_uri_init(mrkhttp_uri_t *uri)
     uri->path = NULL;
     uri->qstring = NULL;
     uri->fragment = NULL;
+    hash_init(&uri->qterms, 17,
+              (hash_hashfn_t)bytes_hash,
+              (hash_item_comparator_t)bytes_cmp,
+              (hash_item_finalizer_t)mrkhttp_uri_qterm_fini);
+    uri->qtermsz = 0;
 }
 
 
@@ -137,6 +153,81 @@ mrkhttp_uri_fini(mrkhttp_uri_t *uri)
     BYTES_DECREF(&uri->path);
     BYTES_DECREF(&uri->qstring);
     BYTES_DECREF(&uri->fragment);
+    hash_fini(&uri->qterms);
+    uri->qtermsz = 0;
+}
+
+
+void
+mrkhttp_uri_add_qterm(mrkhttp_uri_t *uri, mnbytes_t *key, mnbytes_t *value)
+{
+    assert(key != NULL);
+    assert(value != NULL);
+    hash_set_item(&uri->qterms, key, value);
+    uri->qtermsz += BSZ(key);
+    uri->qtermsz += BSZ(value);
+}
+
+
+int
+mrkhttp_parse_qterms(mnbytes_t *s,
+                    char fdelim,
+                    char rdelim,
+                    mnhash_t *hash)
+{
+    int res;
+    char *ss = (char *)BDATA(s);
+    size_t i0, i1, j;
+
+
+#define MRKHTTP_PARSE_QTERMS_FIND_PAIR()                               \
+    for (j = i0; j < i1; ++j) {                                        \
+        char cc;                                                       \
+        cc = ss[j];                                                    \
+        if (cc == fdelim) {                                            \
+            break;                                                     \
+        }                                                              \
+    }                                                                  \
+/*                                                                     \
+    CTRACE("r ss[%ld]:%c,ss[%ld]:%c,ss[%ld]:%c",                       \
+           i0,                                                         \
+           ss[i0],                                                     \
+           j,                                                          \
+           ss[j],                                                      \
+           i1,                                                         \
+           ss[i1]);                                                    \
+ */                                                                    \
+    if (j > i0) {                                                      \
+        mnbytes_t *key, *value;                                        \
+        key = bytes_new_from_str_len(ss + i0, j - i0);                 \
+        ++j;                                                           \
+        if (i1 >= j) {                                                 \
+            value = bytes_new_from_str_len(ss + j, i1 - j);            \
+        } else {                                                       \
+            value = bytes_new(1);                                      \
+            BDATA(value)[0] = '\0';                                    \
+        }                                                              \
+        bytes_urldecode(key);                                          \
+        bytes_urldecode(value);                                        \
+        hash_set_item(hash, key, value);                               \
+        BYTES_INCREF(key);                                             \
+        BYTES_INCREF(value);                                           \
+/*        CTRACE("key=%s value=%s", BDATA(key), BDATA(value)); */      \
+    }                                                                  \
+
+
+    res = 0;
+    for (i0 = 0, i1 = 0, j = 0; i1 < BSZ(s); ++i1) {
+        char c;
+        c = ss[i1];
+        if (c == rdelim) {
+            MRKHTTP_PARSE_QTERMS_FIND_PAIR();
+            i0 = i1 + 1;
+        }
+    }
+    --i1;
+    MRKHTTP_PARSE_QTERMS_FIND_PAIR();
+    return res;
 }
 
 
@@ -314,6 +405,84 @@ mrkhttp_uri_parse(mrkhttp_uri_t *uri, const char *s)
             uri->scheme = MNHTTPC_MESSAGE_SCHEME_HTTP;
         }
     }
+}
+
+
+int
+mrkhttp_uri_start_request(mrkhttp_uri_t *uri,
+                          mnbytestream_t *out,
+                          const char *method)
+{
+    size_t sz;
+
+    sz = strlen(method) + BSZ(uri->relative) + 16;
+
+    if (bytestream_nprintf(out, sz, "%s %s", method, BDATA(uri->relative))) {
+        TRRET(HTTP_START_REQUEST + 1);
+    }
+
+    if (!hash_is_empty(&uri->qterms)) {
+        mnhash_item_t *hit;
+        mnhash_iter_t it;
+        mnbytes_t *keyenc, *valueenc;
+
+        if (uri->qstring == NULL &&
+                (BDATA(uri->relative)[BSZ(uri->relative) - 1] != '?')) {
+            if (bytestream_cat(out, 1, "?")) {
+                TRRET(HTTP_START_REQUEST + 1);
+            }
+        }
+
+        keyenc = bytes_new(uri->qtermsz * 3 + 1);
+        valueenc = bytes_new(uri->qtermsz * 3 + 1);
+
+        if ((hit = hash_first(&uri->qterms, &it)) != NULL) {
+            size_t sz;
+            mnbytes_t *key, *value;
+
+            key = hit->key;
+            value = hit->value;
+            bytes_urlencode2(keyenc, key);
+            bytes_urlencode2(valueenc, value);
+            sz = BSZ(keyenc) + BSZ(valueenc) + 8;
+            if (bytestream_nprintf(out,
+                                   sz,
+                                   "%s=%s",
+                                   BDATA(keyenc),
+                                   BDATA(valueenc))) {
+                TRRET(HTTP_START_REQUEST + 1);
+            }
+        }
+
+        for (hit = hash_next(&uri->qterms, &it);
+             hit != NULL;
+             hit = hash_next(&uri->qterms, &it)) {
+            size_t sz;
+            mnbytes_t *key, *value;
+
+            key = hit->key;
+            value = hit->value;
+            bytes_urlencode2(keyenc, key);
+            bytes_urlencode2(valueenc, value);
+            sz = BSZ(keyenc) + BSZ(valueenc) + 8;
+            if (bytestream_nprintf(out,
+                                   sz,
+                                   "&%s=%s",
+                                   BDATA(keyenc),
+                                   BDATA(valueenc))) {
+                TRRET(HTTP_START_REQUEST + 1);
+            }
+        }
+
+        BYTES_DECREF(&keyenc);
+        BYTES_DECREF(&valueenc);
+    }
+
+    if (bytestream_cat(out, 11, " HTTP/1.1\r\n")) {
+        TRRET(HTTP_START_REQUEST + 1);
+    }
+
+    return 0;
 }
 
 

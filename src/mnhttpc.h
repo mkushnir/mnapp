@@ -25,7 +25,8 @@ typedef union _mnhttpc_message {
         /* MRKHTTP_METHOD_ */
         const char *method; /* weak */
         mrkhttp_uri_t uri;
-        mnbytes_t *content_type; mnhash_t headers;
+        mnhash_t headers;
+        mnbytes_t *content_type;
         size_t content_length;
         struct {
             int keepalive:1;
@@ -109,6 +110,7 @@ int PRINTFLIKE(3, 4) mnhttpc_request_out_field_addf(mnhttpc_request_t *,
                                                     mnbytes_t *,
                                                     const char *,
                                                     ...);
+void mnhttpc_request_out_qterm_addb(mnhttpc_request_t *, mnbytes_t *, mnbytes_t *);
 mnbytes_t *mnhttpc_request_out_header(mnhttpc_request_t *, mnbytes_t *);
 mnbytes_t *mnhttpc_request_in_header(mnhttpc_request_t *, mnbytes_t *);
 int mnhttpc_request_finalize(mnhttpc_request_t *);
