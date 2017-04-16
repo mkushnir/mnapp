@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <time.h>
 #include "mrkcommon/bytes.h"
+#include "mrkcommon/hash.h"
 #include "mrkcommon/bytestream.h"
 
 #ifdef __cplusplus
