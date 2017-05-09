@@ -137,6 +137,7 @@ void mrkhttp_uri_fini(mrkhttp_uri_t *);
 void mrkhttp_uri_add_qterm(mrkhttp_uri_t *, mnbytes_t *, mnbytes_t *);
 int mrkhttp_uri_start_request(mrkhttp_uri_t *, mnbytestream_t *, const char *);
 int mrkhttp_parse_qterms(mnbytes_t *, char, char, mnhash_t *);
+int mrkhttp_parse_kvpbd(mnbytes_t *, char, char, mnhash_t *);
 mnhttp_ctx_t *http_ctx_new(void);
 void http_ctx_destroy(mnhttp_ctx_t **);
 

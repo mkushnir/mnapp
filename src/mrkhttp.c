@@ -169,18 +169,7 @@ mrkhttp_uri_add_qterm(mrkhttp_uri_t *uri, mnbytes_t *key, mnbytes_t *value)
 }
 
 
-int
-mrkhttp_parse_qterms(mnbytes_t *s,
-                    char fdelim,
-                    char rdelim,
-                    mnhash_t *hash)
-{
-    int res;
-    char *ss = (char *)BDATA(s);
-    size_t i0, i1, j;
-
-
-#define MRKHTTP_PARSE_QTERMS_FIND_PAIR()                               \
+#define MRKHTTP_PARSE_QTERMS_FIND_PAIR(keydecode, valdecode)           \
     for (j = i0; j < i1; ++j) {                                        \
         char cc;                                                       \
         cc = ss[j];                                                    \
@@ -207,8 +196,8 @@ mrkhttp_parse_qterms(mnbytes_t *s,
             value = bytes_new(1);                                      \
             BDATA(value)[0] = '\0';                                    \
         }                                                              \
-        bytes_urldecode(key);                                          \
-        bytes_urldecode(value);                                        \
+        keydecode(key);                                                \
+        valdecode(value);                                              \
         hash_set_item(hash, key, value);                               \
         BYTES_INCREF(key);                                             \
         BYTES_INCREF(value);                                           \
@@ -216,19 +205,49 @@ mrkhttp_parse_qterms(mnbytes_t *s,
     }                                                                  \
 
 
-    res = 0;
-    for (i0 = 0, i1 = 0, j = 0; i1 < BSZ(s); ++i1) {
-        char c;
-        c = ss[i1];
-        if (c == rdelim) {
-            MRKHTTP_PARSE_QTERMS_FIND_PAIR();
-            i0 = i1 + 1;
-        }
-    }
-    --i1;
-    MRKHTTP_PARSE_QTERMS_FIND_PAIR();
-    return res;
+#define MRKHTTP_PARSE_KVP_BODY(keydecode, valdecode)                   \
+    int res;                                                           \
+    char *ss = (char *)BDATA(s);                                       \
+    size_t i0, i1, j;                                                  \
+                                                                       \
+                                                                       \
+    res = 0;                                                           \
+    for (i0 = 0, i1 = 0, j = 0; i1 < BSZ(s); ++i1) {                   \
+        char c;                                                        \
+        c = ss[i1];                                                    \
+        if (c == rdelim) {                                             \
+            MRKHTTP_PARSE_QTERMS_FIND_PAIR(keydecode, valdecode);      \
+            i0 = i1 + 1;                                               \
+        }                                                              \
+    }                                                                  \
+    --i1;                                                              \
+    MRKHTTP_PARSE_QTERMS_FIND_PAIR(keydecode, valdecode);              \
+    return res                                                         \
+
+
+
+int
+mrkhttp_parse_qterms(mnbytes_t *s,
+                    char fdelim,
+                    char rdelim,
+                    mnhash_t *hash)
+{
+    MRKHTTP_PARSE_KVP_BODY(bytes_urldecode, bytes_urldecode);
 }
+
+
+
+int
+mrkhttp_parse_kvpbd(mnbytes_t *s,
+                    char fdelim,
+                    char rdelim,
+                    mnhash_t *hash)
+{
+    MRKHTTP_PARSE_KVP_BODY(bytes_brushdown, bytes_brushdown);
+}
+
+
+
 
 
 void
