@@ -321,11 +321,11 @@ mnhttpc_connection_init(mnhttpc_connection_t *conn, int scheme)
     conn->recv_thread = NULL;
     mrkthr_sema_init(&conn->reqfin_sema, 1);
     if (MRKUNLIKELY(bytestream_init(&conn->in, 4096) != 0)) {
-        FAIL("bytestrem_init");
+        FAIL("bytestream_init");
     }
     MRKTHR_SIGNAL_INIT(&conn->send_signal);
     if (MRKUNLIKELY(bytestream_init(&conn->out, 4096) != 0)) {
-        FAIL("bytestrem_init");
+        FAIL("bytestream_init");
     }
 
     if (scheme == MNHTTPC_MESSAGE_SCHEME_HTTPS) {
