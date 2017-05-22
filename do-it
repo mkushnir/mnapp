@@ -1,9 +1,20 @@
 #!/bin/sh
 
+openssl_includedir=`pkg-config --variable=includedir openssl`
+openssl_libdir=`pkg-config --variable=libdir openssl`
+if test -n "$openssl_includedir"
+then
+    openssl_cflags="-I$openssl_includedir"
+fi
+if test -n "$openssl_libdir"
+then
+    openssl_ldflags="-I$openssl_libdir"
+fi
+
 if test "$1" = "init"
 then
-    export LDFLAGS=-L$HOME/lib
-    export CFLAGS=-I$HOME/include
+    export LDFLAGS="${openssl_ldflags} -L$HOME/lib"
+    export CFLAGS="${openssl_cflags} -I$HOME/include"
 
     aclocal
     autoheader
@@ -15,14 +26,14 @@ then
     ./configure --prefix=$HOME --enable-debug
 elif test "$1" = "dev"
 then
-    export LDFLAGS=-L$HOME/lib
-    export CFLAGS=-I$HOME/include
+    export LDFLAGS="${openssl_ldflags} -L$HOME/lib"
+    export CFLAGS="${openssl_cflags} -I$HOME/include"
     autoreconf
     ./configure --prefix=$HOME --enable-debug
 elif test "$1" = "dev-ndebug"
 then
-    export LDFLAGS=-L$HOME/lib
-    export CFLAGS=-I$HOME/include
+    export LDFLAGS="${openssl_ldflags} -L$HOME/lib"
+    export CFLAGS="${openssl_cflags} -I$HOME/include"
     autoreconf
     ./configure --prefix=$HOME
 elif test "$1" = "dist"
