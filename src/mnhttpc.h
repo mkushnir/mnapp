@@ -119,9 +119,9 @@ int mnhttpc_request_finalize(mnhttpc_request_t *);
 int mnhttpc_get_response(mnhttpc_request_t *);
 
 void mnhttpc_init(mnhttpc_t *);
-void mnhttpc_fini(mnhttpc_t *);
+void mnhttpc_fini(mnhttpc_t *); /* MRKTHR_CPOINT */
 mnhttpc_t *mnhttpc_new(void);
-void mnhttpc_destroy(mnhttpc_t **);
+void mnhttpc_destroy(mnhttpc_t **); /* MRKTHR_CPOINT */
 void mnhttpc_gc(mnhttpc_t *);
 
 

@@ -4,6 +4,9 @@
 #include <openssl/ssl.h>
 
 
+//#define TRRET_DEBUG
+#include <mrkcommon/dumpm.h>
+
 #include <mrkcommon/bytestream.h>
 #include <mrkcommon/util.h>
 
@@ -63,7 +66,9 @@ bytestream_ssl_recv_more(mnbytestream_t *stream,
                 break;
 
             default:
+#ifdef TRRET_DEBUG
                 CTRACE("ssl error %d", SSL_get_error(ssl, res));
+#endif
                 nrecv = -1;
                 goto end;
             }

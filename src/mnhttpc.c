@@ -1,6 +1,8 @@
 #include <stdbool.h>
 #include <time.h> /* time_t */
 
+//#define TRRET_DEBUG
+#include <mrkcommon/dumpm.h>
 #include <mrkcommon/fasthash.h>
 
 #include "bytestream_ssl_helper.h"
@@ -388,7 +390,9 @@ mnhttpc_connection_send_worker(UNUSED int argc, void **argv)
 
     }
 
-    //CTRACE("Exiting ...");
+#ifdef TRRET_DEBUG
+    CTRACE("Exiting ...");
+#endif
     mrkthr_signal_fini(&conn->send_signal);
     mrkthr_decabac(conn->send_thread);
     conn->send_thread = NULL;
@@ -509,7 +513,9 @@ mnhttpc_connection_recv_worker(UNUSED int argc, void **argv)
 
     }
 
-    //CTRACE("Exiting ...");
+#ifdef TRRET_DEBUG
+    CTRACE("Exiting ...");
+#endif
     mrkthr_decabac(conn->recv_thread);
     conn->recv_thread = NULL;
     return 0;
@@ -559,7 +565,9 @@ mnhttpc_connection_ssl_init(UNUSED int argc, void **argv)
                     break;
 
                 default:
+#ifdef TRRET_DEBUG
                     CTRACE("ssl error %d", SSL_get_error(conn->ssl, res));
+#endif
                     res = MNHTTPC_CONNECTION_SSL_ERROR;
                     goto end;
                 }
@@ -770,11 +778,12 @@ mnhttpc_request_finalize(mnhttpc_request_t *req)
         goto end0;
     }
 
-    if (mrkhttp_uri_start_request(
+    if ((res = mrkhttp_uri_start_request(
                 &req->request.out.uri,
                 &conn->out,
-                req->request.out.method) == 0) {
+                req->request.out.method)) == 0) {
     } else {
+        TR(res);
         res = -1;
         goto end0;
     }

@@ -163,6 +163,8 @@ mrkhttp_uri_add_qterm(mrkhttp_uri_t *uri, mnbytes_t *key, mnbytes_t *value)
 {
     assert(key != NULL);
     assert(value != NULL);
+    BYTES_INCREF(key);
+    BYTES_INCREF(value);
     hash_set_item(&uri->qterms, key, value);
     uri->qtermsz += BSZ(key);
     uri->qtermsz += BSZ(value);
@@ -436,7 +438,7 @@ mrkhttp_uri_start_request(mrkhttp_uri_t *uri,
 
     sz = strlen(method) + BSZ(uri->relative) + 16;
 
-    if (bytestream_nprintf(out, sz, "%s %s", method, BDATA(uri->relative))) {
+    if (bytestream_nprintf(out, sz, "%s %s", method, BDATA(uri->relative)) < 0) {
         TRRET(HTTP_START_REQUEST + 1);
     }
 
@@ -444,16 +446,18 @@ mrkhttp_uri_start_request(mrkhttp_uri_t *uri,
         mnhash_item_t *hit;
         mnhash_iter_t it;
         mnbytes_t *keyenc, *valueenc;
+        size_t encsz;
 
         if (uri->qstring == NULL &&
                 (BDATA(uri->relative)[BSZ(uri->relative) - 1] != '?')) {
-            if (bytestream_cat(out, 1, "?")) {
+            if (bytestream_cat(out, 1, "?") < 0) {
                 TRRET(HTTP_START_REQUEST + 1);
             }
         }
 
-        keyenc = bytes_new(uri->qtermsz * 3 + 1);
-        valueenc = bytes_new(uri->qtermsz * 3 + 1);
+        encsz = uri->qtermsz * 3 + 1;
+        keyenc = bytes_new(encsz);
+        valueenc = bytes_new(encsz);
 
         if ((hit = hash_first(&uri->qterms, &it)) != NULL) {
             size_t sz;
@@ -461,17 +465,18 @@ mrkhttp_uri_start_request(mrkhttp_uri_t *uri,
 
             key = hit->key;
             value = hit->value;
-            bytes_urlencode2(keyenc, key);
-            bytes_urlencode2(valueenc, value);
+            bytes_str_urlencode2(keyenc, key);
+            bytes_str_urlencode2(valueenc, value);
             sz = BSZ(keyenc) + BSZ(valueenc) + 8;
             if (bytestream_nprintf(out,
                                    sz,
                                    "%s=%s",
                                    BDATA(keyenc),
-                                   BDATA(valueenc))) {
-                TRRET(HTTP_START_REQUEST + 1);
+                                   BDATA(valueenc)) < 0) {
+                TRRET(HTTP_START_REQUEST + 2);
             }
         }
+
 
         for (hit = hash_next(&uri->qterms, &it);
              hit != NULL;
@@ -479,17 +484,19 @@ mrkhttp_uri_start_request(mrkhttp_uri_t *uri,
             size_t sz;
             mnbytes_t *key, *value;
 
+            keyenc->sz = encsz;
+            valueenc->sz = encsz;
             key = hit->key;
             value = hit->value;
-            bytes_urlencode2(keyenc, key);
-            bytes_urlencode2(valueenc, value);
+            bytes_str_urlencode2(keyenc, key);
+            bytes_str_urlencode2(valueenc, value);
             sz = BSZ(keyenc) + BSZ(valueenc) + 8;
             if (bytestream_nprintf(out,
                                    sz,
                                    "&%s=%s",
                                    BDATA(keyenc),
-                                   BDATA(valueenc))) {
-                TRRET(HTTP_START_REQUEST + 1);
+                                   BDATA(valueenc)) < 0) {
+                TRRET(HTTP_START_REQUEST + 3);
             }
         }
 
@@ -497,8 +504,8 @@ mrkhttp_uri_start_request(mrkhttp_uri_t *uri,
         BYTES_DECREF(&valueenc);
     }
 
-    if (bytestream_cat(out, 11, " HTTP/1.1\r\n")) {
-        TRRET(HTTP_START_REQUEST + 1);
+    if (bytestream_cat(out, 11, " HTTP/1.1\r\n") < 0) {
+        TRRET(HTTP_START_REQUEST + 4);
     }
 
     return 0;
@@ -602,7 +609,7 @@ http_start_request(mnbytestream_t *out,
     size_t sz;
 
     sz = strlen(method) + strlen(uri) + 16;
-    if (bytestream_nprintf(out, sz, "%s %s HTTP/1.1\r\n", method, uri)) {
+    if (bytestream_nprintf(out, sz, "%s %s HTTP/1.1\r\n", method, uri) < 0) {
         TRRET(HTTP_START_REQUEST + 1);
     }
     return 0;
@@ -717,7 +724,7 @@ http_end_of_header(mnbytestream_t *out)
 {
     int res = 0;
 
-    if ((res = bytestream_cat(out, 2, "\r\n")) <= 0) {
+    if ((res = bytestream_cat(out, 2, "\r\n")) < 0) {
         res = HTTP_END_OF_HEADER + 1;
     } else {
         res = 0;
