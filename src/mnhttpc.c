@@ -454,13 +454,24 @@ mnhttpc_response_header_cb(UNUSED mnhttp_ctx_t *ctx,
 {
     mnhttpc_request_t *req = udata;
     mnbytes_t *name, *value;
+    mnhash_item_t *hit;
 
     name = bytes_new_from_str(SDATA(bs, ctx->current_header_name.start));
     name = bytes_set_lower(name);
-    BYTES_INCREF(name);
-    value = bytes_new_from_str(SDATA(bs, ctx->current_header_value.start));
-    BYTES_INCREF(value);
-    hash_set_item(&req->response.in.headers, name, value);
+
+    /*
+     * first found wins
+     */
+    if ((hit = hash_get_item(&req->response.in.headers, name)) != NULL) {
+        BYTES_DECREF(&name);
+
+    } else {
+        BYTES_INCREF(name);
+        value = bytes_new_from_str(SDATA(bs, ctx->current_header_value.start));
+        BYTES_INCREF(value);
+        hash_set_item(&req->response.in.headers, name, value);
+    }
+
 
     //CTRACE("current header %s - %s",
     //       SDATA(bs, ctx->current_header_name.start),
