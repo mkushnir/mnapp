@@ -47,7 +47,7 @@ run_uri(mnhttpc_t *cli, mnbytes_t *uri)
     mnhash_item_t *hit;
     mnhash_iter_t it;
 
-    if ((req = mnhttpc_get_new(cli, uri, in_body_cb_ignore)) == NULL) {
+    if ((req = mnhttpc_get_new(cli, NULL, NULL, uri, in_body_cb_ignore)) == NULL) {
         FAIL("mnhttpc_get_new");
     }
     mnhttpc_request_out_field_addf(req, &_qwe, "v:%d", 123);

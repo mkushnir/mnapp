@@ -65,6 +65,8 @@ typedef struct _mnhttpc_request {
 
 typedef struct _mnhttpc_connection {
     uint64_t hash;
+    mnbytes_t *proxy_host;
+    mnbytes_t *proxy_port;
     mnbytes_t *host;
     mnbytes_t *port;
     int fd; /* connect socket */
@@ -94,6 +96,8 @@ typedef struct _mnhttpc {
 
 void mnhttpc_request_destroy(mnhttpc_request_t **req);
 mnhttpc_request_t *mnhttpc_get_new(mnhttpc_t *,
+                                   mnbytes_t *,
+                                   mnbytes_t *,
                                    mnbytes_t *,
                                    mnhttpc_response_body_cb_t);
 mnhttpc_request_t *mnhttpc_post_new(mnhttpc_t *,

@@ -213,9 +213,28 @@ static uint64_t
 mnhttpc_connection_hash(mnhttpc_connection_t *conn)
 {
     if (conn->hash == 0) {
-        if (conn->host != NULL) {
-            conn->hash = bytes_hash(conn->host);
+        if (conn->proxy_host != NULL) {
+            conn->hash = bytes_hash(conn->proxy_host);
         }
+
+        if (conn->proxy_port != NULL) {
+            union {
+                uint64_t i;
+                unsigned char c;
+            } u;
+            u.i = bytes_hash(conn->proxy_port);
+            conn->hash = fasthash(conn->hash, &u.c, sizeof(uint64_t));
+        }
+
+        if (conn->host != NULL) {
+            union {
+                uint64_t i;
+                unsigned char c;
+            } u;
+            u.i = bytes_hash(conn->host);
+            conn->hash = fasthash(conn->hash, &u.c, sizeof(uint64_t));
+        }
+
         if (conn->port != NULL) {
             union {
                 uint64_t i;
@@ -226,6 +245,7 @@ mnhttpc_connection_hash(mnhttpc_connection_t *conn)
             conn->hash = fasthash(conn->hash, &u.c, sizeof(uint64_t));
         }
     }
+
     return conn->hash;
 }
 
@@ -271,6 +291,8 @@ mnhttpc_connection_fini(mnhttpc_connection_t *conn)
     mnhttpc_request_t *req;
 
     conn->hash = 0;
+    BYTES_DECREF(&conn->proxy_host);
+    BYTES_DECREF(&conn->proxy_port);
     BYTES_DECREF(&conn->host);
     BYTES_DECREF(&conn->port);
 
@@ -315,6 +337,8 @@ static void
 mnhttpc_connection_init(mnhttpc_connection_t *conn, int scheme)
 {
     conn->hash = 0;
+    conn->proxy_host = NULL;
+    conn->proxy_port = NULL;
     conn->host = NULL;
     conn->port = NULL;
     conn->fd = -1;
@@ -350,7 +374,9 @@ mnhttpc_connection_init(mnhttpc_connection_t *conn, int scheme)
 
 
 static mnhttpc_connection_t *
-mnhttpc_connection_new(mnbytes_t *host,
+mnhttpc_connection_new(mnbytes_t *proxy_host,
+                       mnbytes_t *proxy_port,
+                       mnbytes_t *host,
                        mnbytes_t *port,
                        int scheme)
 {
@@ -359,7 +385,16 @@ mnhttpc_connection_new(mnbytes_t *host,
     if (MRKUNLIKELY((conn = malloc(sizeof(mnhttpc_connection_t))) == NULL)) {
         FAIL("malloc");
     }
+
     mnhttpc_connection_init(conn, scheme);
+    if (proxy_host != NULL) {
+        conn->proxy_host = proxy_host;
+        BYTES_INCREF(proxy_host);
+    }
+    if (proxy_port != NULL) {
+        conn->proxy_port = proxy_port;
+        BYTES_INCREF(proxy_port);
+    }
     conn->host = host;
     BYTES_INCREF(host);
     conn->port = port;
@@ -583,13 +618,25 @@ static int
 mnhttpc_connection_connect(mnhttpc_connection_t *conn)
 {
     int res;
+    mnbytes_t *peer_host;
+    mnbytes_t *peer_port;
 
     assert(conn->host != NULL && conn->port != NULL);
 
     res = 0;
+    if (conn->proxy_host != NULL) {
+        peer_host = conn->proxy_host;
+    } else {
+        peer_host = conn->host;
+    }
+    if (conn->proxy_port != NULL) {
+        peer_port = conn->proxy_port;
+    } else {
+        peer_port = conn->port;
+    }
     if ((conn->fd = mrkthr_socket_connect(
-                (char *)BDATA(conn->host),
-                (char *)BDATA(conn->port),
+                (char *)BDATA(peer_host),
+                (char *)BDATA(peer_port),
                 AF_UNSPEC)) == -1) {
         res = MRKHTTPC_CONNECTION_CONNECT + 1;
 
@@ -691,6 +738,8 @@ mnhttpc_fini(mnhttpc_t *cli)
 
 mnhttpc_request_t *
 mnhttpc_get_new(mnhttpc_t *cli,
+                mnbytes_t *proxy_host,
+                mnbytes_t *proxy_port,
                 mnbytes_t *uri,
                 mnhttpc_response_body_cb_t in_body_cb)
 {
@@ -720,10 +769,14 @@ mnhttpc_get_new(mnhttpc_t *cli,
     }
 
     probe.hash = 0;
+    probe.proxy_host = proxy_host;
+    probe.proxy_port = proxy_port;
     probe.host = req->request.out.uri.host;
     probe.port = req->request.out.uri.port;
     if ((hit = hash_get_item(&cli->connections, &probe)) == NULL) {
-        conn = mnhttpc_connection_new(req->request.out.uri.host,
+        conn = mnhttpc_connection_new(proxy_host,
+                                      proxy_port,
+                                      req->request.out.uri.host,
                                       req->request.out.uri.port,
                                       req->request.out.uri.scheme);
         hash_set_item(&cli->connections, conn, NULL);
