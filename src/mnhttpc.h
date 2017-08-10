@@ -95,15 +95,43 @@ typedef struct _mnhttpc {
 
 
 void mnhttpc_request_destroy(mnhttpc_request_t **req);
-mnhttpc_request_t *mnhttpc_get_new(mnhttpc_t *,
-                                   mnbytes_t *,
-                                   mnbytes_t *,
-                                   mnbytes_t *,
-                                   mnhttpc_response_body_cb_t);
-mnhttpc_request_t *mnhttpc_post_new(mnhttpc_t *,
-                                    mnbytes_t *,
-                                    mnhttpc_request_body_cb_t,
-                                    void *);
+mnhttpc_request_t *mnhttpc_new(mnhttpc_t *,
+                               mnbytes_t *,
+                               mnbytes_t *,
+                               mnbytes_t *,
+                               const char *,
+                               mnhttpc_request_body_cb_t,
+                               void *,
+                               mnhttpc_response_body_cb_t);
+
+#define mnhttpc_get_new(cli, proxy_host, proxy_port, uri, in_body_cb)  \
+    mnhttpc_new(cli,                                                   \
+                proxy_host,                                            \
+                proxy_port,                                            \
+                uri,                                                   \
+                MRKHTTP_METHOD_GET,                                    \
+                NULL,                                                  \
+                NULL,                                                  \
+                in_body_cb)                                            \
+
+
+#define mnhttpc_post_new(cli,                  \
+                         proxy_host,           \
+                         proxy_port,           \
+                         uri,                  \
+                         out_body_cb,          \
+                         out_body_cb_udata,    \
+                         in_body_cb)           \
+    mnhttpc_new(cli,                           \
+                proxy_host,                    \
+                proxy_port,                    \
+                uri,                           \
+                MRKHTTP_METHOD_POST,           \
+                out_body_cb,                   \
+                out_body_cb_udata,             \
+                in_body_cb)                    \
+
+
 int mnhttpc_request_out_field_addb(mnhttpc_request_t *,
                                    mnbytes_t *,
                                    mnbytes_t *);
@@ -124,7 +152,6 @@ int mnhttpc_get_response(mnhttpc_request_t *);
 
 void mnhttpc_init(mnhttpc_t *);
 void mnhttpc_fini(mnhttpc_t *); /* MRKTHR_CPOINT */
-mnhttpc_t *mnhttpc_new(void);
 void mnhttpc_destroy(mnhttpc_t **); /* MRKTHR_CPOINT */
 void mnhttpc_gc(mnhttpc_t *);
 

@@ -748,18 +748,23 @@ mnhttpc_fini(mnhttpc_t *cli)
 
 
 mnhttpc_request_t *
-mnhttpc_get_new(mnhttpc_t *cli,
-                mnbytes_t *proxy_host,
-                mnbytes_t *proxy_port,
-                mnbytes_t *uri,
-                mnhttpc_response_body_cb_t in_body_cb)
+mnhttpc_new(mnhttpc_t *cli,
+            mnbytes_t *proxy_host,
+            mnbytes_t *proxy_port,
+            mnbytes_t *uri,
+            const char *method,
+            mnhttpc_request_body_cb_t out_body_cb,
+            void *out_body_cb_udata,
+            mnhttpc_response_body_cb_t in_body_cb)
 {
     mnhttpc_request_t *req;
     mnhash_item_t *hit;
     mnhttpc_connection_t *conn, probe;
 
     req = mnhttpc_request_new();
-    req->request.out.method = MRKHTTP_METHOD_GET;
+    req->request.out.method = method;
+    req->out_body_cb = out_body_cb;
+    req->out_body_cb_udata = out_body_cb_udata;
     req->in_body_cb = in_body_cb;
     mrkhttp_uri_parse(&req->request.out.uri, (char *)BDATA(uri));
 

@@ -878,6 +878,7 @@ process_body(mnhttp_ctx_t *ctx,
             ctx->bodysz += ctx->current_chunk_size;
 
             if (tmp != end || ctx->current_chunk_size  < 0) {
+                // XXX chunk extension support TBD
                 //D32(SDATA(in, ctx->current_chunk.start), 32);
                 TRRET(PROCESS_BODY + 1);
             }
@@ -927,7 +928,7 @@ process_body(mnhttp_ctx_t *ctx,
                     }
                 }
 
-                /* prepare to the next chunk */
+                /* prepare for the next chunk */
                 ctx->chunk_parser_state = PS_CHUNK_SIZE;
                 /* account for \r\n */
                 SADVANCEPOS(in, 2);
