@@ -1,7 +1,8 @@
 AUTOMAKE_OPTIONS = foreign subdir-objects
 
+diags = diag.txt
 BUILT_SOURCES = diag.c diag.h
-EXTRA_DIST = diag.txt gen-diag
+EXTRA_DIST = $(diags)
 CLEANFILES = $(BUILT_SOURCES) *.core
 #CLEANFILES += *.in
 
@@ -28,10 +29,10 @@ endif
 
 libmrkapp_la_CFLAGS = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 @MRKCOMMON_LOCAL_CFLAGS@ @MRKTHR_LOCAL_CFLAGS@ @_GNU_SOURCE_MACRO@ @_XOPEN_SOURCE_MACRO@ -I$(includedir)
 
-libmrkapp_la_LDFLAGS = -version-info 0:0:0 -lmrkthr @MRKTHR_LOCAL_LDFLAGS@ -lmrkcommon @MRKCOMMON_LOCAL_LDFLAGS@ -L$(libdir) -lz -lcrypto -lssl
+libmrkapp_la_LDFLAGS = -version-info 0:0:0 -lmrkthr @MRKTHR_LOCAL_LDFLAGS@ -lmrkcommon -lmndiag @MRKCOMMON_LOCAL_LDFLAGS@ -L$(libdir) -lz -lcrypto -lssl
 
-diag.c diag.h: diag.txt
-	$(AM_V_GEN) cat diag.txt | sort -u | /bin/sh ./gen-diag mrkapp
+diag.c diag.h: $(diags)
+	$(AM_V_GEN) cat $(diags) | sort -u >diag.txt.tmp && mndiagen -S diag.txt.tmp -L mrkapp -H diag.h -C diag.c *.[ch]
 
 run: all
 	for i in $(bin_PROGRAMS); do if test -x ./$$i; then LD_LIBRARY_PATH=$(libdir) ./$$i; fi; done;
