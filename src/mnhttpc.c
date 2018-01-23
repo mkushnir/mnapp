@@ -4,6 +4,7 @@
 //#define TRRET_DEBUG
 #include <mrkcommon/dumpm.h>
 #include <mrkcommon/fasthash.h>
+#include <mrkcommon/util.h>
 
 #include "bytestream_ssl_helper.h"
 #include <mnhttpc.h>
@@ -257,7 +258,7 @@ mnhttpc_connection_cmp(mnhttpc_connection_t *a, mnhttpc_connection_t *b)
 
     ha = mnhttpc_connection_hash(a);
     hb = mnhttpc_connection_hash(b);
-    return ha > hb ? 1 : ha < hb ? -1 : 0;
+    return MNCMP(ha, hb);
 }
 
 
