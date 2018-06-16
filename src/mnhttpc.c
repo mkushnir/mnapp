@@ -267,10 +267,12 @@ mnhttpc_connection_close(mnhttpc_connection_t *conn)
 {
     if (conn->send_thread != NULL) {
         mrkthr_set_interrupt_and_join(conn->send_thread);
+        conn->send_thread = NULL;
     }
 
     if (conn->recv_thread != NULL) {
         mrkthr_set_interrupt_and_join(conn->recv_thread);
+        conn->recv_thread = NULL;
     }
 
     if (conn->ssl != NULL) {
@@ -414,6 +416,11 @@ mnhttpc_connection_send_worker(UNUSED int argc, void **argv)
 
     while (true) {
         //D16(SDATA(&conn->out, 0), SEOD(&conn->out));
+        if (SPOS(&conn->out) < 0) {
+            CTRACE("conn=%p out=%p produce %ld->%ld (%ld)", conn, &conn->out, SPOS(&conn->out), SEOD(&conn->out), SEOD(&conn->out) - SPOS(&conn->out));
+            mrkthr_dump(mrkthr_me());
+            D32(conn, sizeof(*conn));
+        }
         if (bytestream_produce_data(&conn->out, conn->fp) != 0) {
             break;
         }
@@ -839,12 +846,12 @@ mnhttpc_request_finalize(mnhttpc_request_t *req)
     res = 0;
 
     if (mrkthr_sema_acquire(&conn->reqfin_sema) != 0) {
-        res = -1;
+        res = MNHTTPC_REQUEST_FINALIZE + 1;
         goto end1;
     }
 
     if (mnhttpc_connection_ensure_connected(conn) != 0) {
-        res = -1;
+        res = MNHTTPC_REQUEST_FINALIZE + 2;
         goto end0;
     }
 
@@ -854,7 +861,7 @@ mnhttpc_request_finalize(mnhttpc_request_t *req)
                 req->request.out.method)) == 0) {
     } else {
         TR(res);
-        res = -1;
+        res = MNHTTPC_REQUEST_FINALIZE + 3;
         goto end0;
     }
 

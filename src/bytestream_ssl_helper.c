@@ -127,7 +127,9 @@ bytestream_ssl_send(mnbytestream_t *stream,
             }
         }
     }
-    stream->pos += nwritten;
+    if (nwritten > 0) {
+        stream->pos += nwritten;
+    }
 
 end:
     //TRACE("nwritten=%ld", nwritten);
