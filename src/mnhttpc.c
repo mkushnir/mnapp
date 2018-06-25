@@ -437,8 +437,10 @@ mnhttpc_connection_send_worker(UNUSED int argc, void **argv)
     CTRACE("Exiting ...");
 #endif
     mrkthr_signal_fini(&conn->send_signal);
-    mrkthr_decabac(conn->send_thread);
-    conn->send_thread = NULL;
+    if (conn->send_thread != NULL) {
+        mrkthr_decabac(conn->send_thread);
+        conn->send_thread = NULL;
+    }
 
     return 0;
 }
@@ -570,8 +572,10 @@ mnhttpc_connection_recv_worker(UNUSED int argc, void **argv)
 #ifdef TRRET_DEBUG
     CTRACE("Exiting ...");
 #endif
-    mrkthr_decabac(conn->recv_thread);
-    conn->recv_thread = NULL;
+    if (conn->recv_thread != NULL) {
+        mrkthr_decabac(conn->recv_thread);
+        conn->recv_thread = NULL;
+    }
     return 0;
 }
 
