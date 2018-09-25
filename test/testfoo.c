@@ -35,7 +35,7 @@ test0(void)
 
 
 static int
-_mycb(int argc, void **argv)
+_mycb(UNUSED int argc, void **argv)
 {
     mrkapp_tcp_server_t *srv;
     int fd;
@@ -73,7 +73,7 @@ mycb(mrkapp_tcp_server_t *srv, mrkthr_socket_t *sock, UNUSED void *udata)
 
 
 static int
-test1(int argc, void **argv)
+test1(UNUSED int argc, void **argv)
 {
     const char *addr;
     int res;
