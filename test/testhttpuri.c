@@ -7,7 +7,7 @@
 #include <mrkcommon/dumpm.h>
 #include <mrkcommon/util.h>
 #include <mrkapp.h>
-#include <mrkhttp.h>
+#include <mnhttp.h>
 
 #include "diag.h"
 
