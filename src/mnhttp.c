@@ -13,7 +13,7 @@
 
 #include "diag.h"
 
-#include <mrkhttp.h>
+#include <mnhttp.h>
 
 #define RFC3986_RESEVED 0x01
 #define RFC3986_OTHERS  0x02
