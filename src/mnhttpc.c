@@ -26,7 +26,7 @@ static void
 mnhttpc_message_init_out(mnhttpc_message_t *msg)
 {
     msg->out.method = NULL;
-    mrkhttp_uri_init(&msg->out.uri);
+    mnhttp_uri_init(&msg->out.uri);
     msg->out.content_type = NULL;
     hash_init(&msg->out.headers, 17,
               (hash_hashfn_t)bytes_hash,
@@ -41,7 +41,7 @@ static void
 mnhttpc_message_fini_out(mnhttpc_message_t *msg)
 {
     msg->out.method = NULL;
-    mrkhttp_uri_fini(&msg->out.uri);
+    mnhttp_uri_fini(&msg->out.uri);
     BYTES_DECREF(&msg->out.content_type);
     hash_fini(&msg->out.headers);
     msg->out.content_length = 0;
@@ -778,7 +778,7 @@ mnhttpc_new(mnhttpc_t *cli,
     req->out_body_cb = out_body_cb;
     req->out_body_cb_udata = out_body_cb_udata;
     req->in_body_cb = in_body_cb;
-    mrkhttp_uri_parse(&req->request.out.uri, (char *)BDATA(uri));
+    mnhttp_uri_parse(&req->request.out.uri, (char *)BDATA(uri));
 
     if (bytes_is_null_or_empty(req->request.out.uri.host)) {
         goto err;
@@ -829,7 +829,7 @@ mnhttpc_request_out_qterm_addb(mnhttpc_request_t *req,
                                mnbytes_t *name,
                                mnbytes_t *value)
 {
-    mrkhttp_uri_add_qterm(&req->request.out.uri, name, value);
+    mnhttp_uri_add_qterm(&req->request.out.uri, name, value);
 }
 
 
@@ -859,7 +859,7 @@ mnhttpc_request_finalize(mnhttpc_request_t *req)
         goto end0;
     }
 
-    if ((res = mrkhttp_uri_start_request(
+    if ((res = mnhttp_uri_start_request(
                 &req->request.out.uri,
                 &conn->out,
                 req->request.out.method)) == 0) {

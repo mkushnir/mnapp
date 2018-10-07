@@ -110,7 +110,7 @@ typedef struct _mnhttp_ctx {
 /*
  * https://tools.ietf.org/html/rfc3986
  */
-typedef struct _mrkhttp_uri {
+typedef struct _mnhttp_uri {
 #define MNHTTPC_MESSAGE_SCHEME_UNDEF    (-1)
 #define MNHTTPC_MESSAGE_SCHEME_HTTP     (0)
 #define MNHTTPC_MESSAGE_SCHEME_HTTPS    (1)
@@ -125,17 +125,17 @@ typedef struct _mrkhttp_uri {
     mnbytes_t *fragment;
     mnhash_t qterms;
     size_t qtermsz;
-} mrkhttp_uri_t;
+} mnhttp_uri_t;
 
 
 char *findcrlf(char *, int);
 
 void http_ctx_init(mnhttp_ctx_t *);
 void http_ctx_fini(mnhttp_ctx_t *);
-void mrkhttp_uri_init(mrkhttp_uri_t *);
-void mrkhttp_uri_fini(mrkhttp_uri_t *);
-void mrkhttp_uri_add_qterm(mrkhttp_uri_t *, mnbytes_t *, mnbytes_t *);
-int mrkhttp_uri_start_request(mrkhttp_uri_t *, mnbytestream_t *, const char *);
+void mnhttp_uri_init(mnhttp_uri_t *);
+void mnhttp_uri_fini(mnhttp_uri_t *);
+void mnhttp_uri_add_qterm(mnhttp_uri_t *, mnbytes_t *, mnbytes_t *);
+int mnhttp_uri_start_request(mnhttp_uri_t *, mnbytestream_t *, const char *);
 int mrkhttp_parse_qterms(mnbytes_t *, char, char, mnhash_t *);
 int mrkhttp_parse_kvpbd(mnbytes_t *, char, char, mnhash_t *);
 mnhttp_ctx_t *http_ctx_new(void);
@@ -219,7 +219,7 @@ int http_parse_response(void *,
                         mnhttp_cb_t,
                         void *);
 
-void mrkhttp_uri_parse(mrkhttp_uri_t *, const char *);
+void mnhttp_uri_parse(mnhttp_uri_t *, const char *);
 
 #ifdef __cplusplus
 }

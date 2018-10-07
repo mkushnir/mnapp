@@ -114,7 +114,7 @@ http_urldecode(char *s)
 
 
 static int
-mrkhttp_uri_qterm_fini(mnbytes_t *key, mnbytes_t *value)
+mnhttp_uri_qterm_fini(mnbytes_t *key, mnbytes_t *value)
 {
     BYTES_DECREF(&key);
     BYTES_DECREF(&value);
@@ -123,7 +123,7 @@ mrkhttp_uri_qterm_fini(mnbytes_t *key, mnbytes_t *value)
 
 
 void
-mrkhttp_uri_init(mrkhttp_uri_t *uri)
+mnhttp_uri_init(mnhttp_uri_t *uri)
 {
     uri->scheme = MNHTTPC_MESSAGE_SCHEME_UNDEF;
     uri->user = NULL;
@@ -137,13 +137,13 @@ mrkhttp_uri_init(mrkhttp_uri_t *uri)
     hash_init(&uri->qterms, 17,
               (hash_hashfn_t)bytes_hash,
               (hash_item_comparator_t)bytes_cmp,
-              (hash_item_finalizer_t)mrkhttp_uri_qterm_fini);
+              (hash_item_finalizer_t)mnhttp_uri_qterm_fini);
     uri->qtermsz = 0;
 }
 
 
 void
-mrkhttp_uri_fini(mrkhttp_uri_t *uri)
+mnhttp_uri_fini(mnhttp_uri_t *uri)
 {
     BYTES_DECREF(&uri->user);
     BYTES_DECREF(&uri->password);
@@ -159,7 +159,7 @@ mrkhttp_uri_fini(mrkhttp_uri_t *uri)
 
 
 void
-mrkhttp_uri_add_qterm(mrkhttp_uri_t *uri, mnbytes_t *key, mnbytes_t *value)
+mnhttp_uri_add_qterm(mnhttp_uri_t *uri, mnbytes_t *key, mnbytes_t *value)
 {
     assert(key != NULL);
     assert(value != NULL);
@@ -253,7 +253,7 @@ mrkhttp_parse_kvpbd(mnbytes_t *s,
 
 
 void
-mrkhttp_uri_parse(mrkhttp_uri_t *uri, const char *s)
+mnhttp_uri_parse(mnhttp_uri_t *uri, const char *s)
 {
     const char *p0;
     const char *puser,
@@ -430,7 +430,7 @@ mrkhttp_uri_parse(mrkhttp_uri_t *uri, const char *s)
 
 
 int
-mrkhttp_uri_start_request(mrkhttp_uri_t *uri,
+mnhttp_uri_start_request(mnhttp_uri_t *uri,
                           mnbytestream_t *out,
                           const char *method)
 {

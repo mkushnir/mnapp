@@ -20,7 +20,7 @@ static void
 test0(void)
 {
     unsigned i;
-    mrkhttp_uri_t uri;
+    mnhttp_uri_t uri;
     struct _testcase {
         const char *in;
         int scheme;
@@ -396,8 +396,8 @@ test0(void)
 
 
     for (i = 0; i < countof(data); ++i) {
-        mrkhttp_uri_init(&uri);
-        mrkhttp_uri_parse(&uri, data[i].in);
+        mnhttp_uri_init(&uri);
+        mnhttp_uri_parse(&uri, data[i].in);
         TRACE(">>> %s", data[i].in);
 
         TRACE("scheme %s",
@@ -425,7 +425,7 @@ test0(void)
 
 
 
-        mrkhttp_uri_fini(&uri);
+        mnhttp_uri_fini(&uri);
     }
 }
 

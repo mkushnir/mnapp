@@ -24,7 +24,7 @@ typedef union _mnhttpc_message {
     struct {
         /* MRKHTTP_METHOD_ */
         const char *method; /* weak */
-        mrkhttp_uri_t uri;
+        mnhttp_uri_t uri;
         mnhash_t headers;
         mnbytes_t *content_type;
         size_t content_length;
