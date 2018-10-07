@@ -11,7 +11,7 @@
 #include <mrkcommon/hash.h>
 #include <mrkcommon/stqueue.h>
 
-#include <mrkhttp.h>
+#include <mnhttp.h>
 #include <mrkthr.h>
 
 #ifdef __cplusplus
