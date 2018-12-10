@@ -22,15 +22,28 @@ libmrkapp_la_SOURCES = mrkapp.c \
 
 nodist_libmrkapp_la_SOURCES = diag.c
 
+DEBUG_LD_FLAGS =
 if DEBUG
-    DEBUG_FLAGS = -g -O0 @CLANG_DEBUG@
+DEBUG_CC_FLAGS = -g -O0 @CC_DEBUG@
+DEBUG_LD_FLAGS += -no-install
 else
-DEBUG_FLAGS = -DNDEBUG -O3
+DEBUG_CC_FLAGS = -DNDEBUG -O3 -fomit-frame-pointer
+if LTO
+DEBUG_CC_FLAGS += @CC_LTO@
+DEBUG_LD_FLAGS += @LD_LTO@
+endif
 endif
 
-libmrkapp_la_CFLAGS = $(DEBUG_FLAGS) -Wall -Wextra -Werror -std=c99 @MRKCOMMON_LOCAL_CFLAGS@ @MRKTHR_LOCAL_CFLAGS@ @_GNU_SOURCE_MACRO@ @_XOPEN_SOURCE_MACRO@ -I$(includedir)
+if ALLSTATIC
+libmrkapp_la_LDFLAGS = -all-static
+else
+libmrkapp_la_LDFLAGS =
+endif
 
-libmrkapp_la_LDFLAGS = -version-info 0:0:0 -lmrkthr @MRKTHR_LOCAL_LDFLAGS@ -lmrkcommon -lmndiag @MRKCOMMON_LOCAL_LDFLAGS@ -L$(libdir) -lcrypto -lssl -lz
+libmrkapp_la_CFLAGS = $(DEBUG_CC_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ @_XOPEN_SOURCE_MACRO@ -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
+
+libmrkapp_la_LDFLAGS += $(DEBUG_LD_FLAGS) -version-info 0:0:0 -L$(libdir)
+libmrkapp_la_LIBADD = -lmrkthr -lmrkcommon -lmndiag -lcrypto -lssl -lz
 
 diag.c diag.h: $(diags)
 	$(AM_V_GEN) cat $(diags) | sort -u >diag.txt.tmp && mndiagen -v -S diag.txt.tmp -L mrkapp -H diag.h -C diag.c *.[ch]

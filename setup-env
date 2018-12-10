@@ -16,6 +16,7 @@ then
     export LDFLAGS="${openssl_ldflags} -L$HOME/lib"
     export CFLAGS="${openssl_cflags} -I$HOME/include"
 
+    autoreconf --force
     aclocal
     autoheader
     autoreconf
@@ -24,23 +25,40 @@ then
     make distclean
     autoreconf
     ./configure --prefix=$HOME --enable-debug
+
 elif test "$1" = "dev"
 then
     export LDFLAGS="${openssl_ldflags} -L$HOME/lib"
     export CFLAGS="${openssl_cflags} -I$HOME/include"
-    autoreconf
+    autoreconf --force
     ./configure --prefix=$HOME --enable-debug
+
+elif test "$1" = "dev-static"
+then
+    export LDFLAGS="${openssl_ldflags} -L$HOME/lib"
+    export CFLAGS="${openssl_cflags} -I$HOME/include"
+    autoreconf --force
+    ./configure --prefix=$HOME --enable-debug --enable-allstatic
+
 elif test "$1" = "dev-ndebug"
 then
     export LDFLAGS="${openssl_ldflags} -L$HOME/lib"
     export CFLAGS="${openssl_cflags} -I$HOME/include"
-    autoreconf
+    autoreconf --force
     ./configure --prefix=$HOME
+
+elif test "$1" = "dev-ndebug-static"
+then
+    export LDFLAGS="${openssl_ldflags} -L$HOME/lib"
+    export CFLAGS="${openssl_cflags} -I$HOME/include"
+    autoreconf --force
+    ./configure --prefix=$HOME --enable-allstatic --enable-lto
+
 elif test "$1" = "dist"
 then
     unset LDFLAGS
     unset CFLAGS
-    autoreconf
+    autoreconf --force
     ./configure
     if test -f port/distinfo
     then
@@ -56,5 +74,5 @@ then
         fi
     done
 else
-    echo "`basename $0` {init|dev|dist|dev-ndebug}"
+    echo "`basename $0` {init|dev[-static]|dist|dev-ndebug[-static]}"
 fi
