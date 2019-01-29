@@ -70,14 +70,10 @@ mncommand_ctx_format_help(mncommand_ctx_t *ctx, mnbytestream_t *bs)
                     }
                 }
 end0:
-                (void)bytestream_cat(bs, 1, "\n");
+                ;
 
             } else {
-                if (nwritten > SPECW) {
-                    (void)bytestream_cat(bs, 1, "\n");
-                } else {
-                    (void)bytestream_cat(bs, 2, "\n\n");
-                }
+                (void)bytestream_cat(bs, 1, "\n");
             }
         }
     }
