@@ -1,5 +1,3 @@
-AUTOMAKE_OPTIONS = foreign subdir-objects
-
 diags = diag.txt
 BUILT_SOURCES = diag.c diag.h
 EXTRA_DIST = $(diags)
