@@ -3,6 +3,7 @@
 
 #include <getopt.h>
 #include <mrkcommon/bytes.h>
+#include <mrkcommon/bytestream.h>
 #include <mrkcommon/array.h>
 
 
