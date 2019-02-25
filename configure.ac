@@ -129,7 +129,7 @@ AC_ARG_ENABLE(lto,
 AM_CONDITIONAL([LTO], [test "$enable_lto" = "yes"])
 
 # pass LDFLAGS=-L${LOCALBASE}/lib in the environment
-AC_CHECK_LIB(mrkcommon, mndiag_mrkcommon_str, [], [AC_MSG_FAILURE(libmrkcommon.so is required. Please find it at git@github.com:mkushnir/mrkcommon.git)]) 
-AC_CHECK_LIB(mrkthr, mndiag_mrkthr_str, [], [AC_MSG_FAILURE(libmrkthr.so is required. Please find it at git@github.com:mkushnir/mrkthr.git)]) 
+dnl AC_CHECK_LIB(mrkcommon, mndiag_mrkcommon_str, [], [AC_MSG_FAILURE(libmrkcommon.so is required. Please find it at git@github.com:mkushnir/mrkcommon.git)]) 
+dnl AC_CHECK_LIB(mrkthr, mndiag_mrkthr_str, [], [AC_MSG_FAILURE(libmrkthr.so is required. Please find it at git@github.com:mkushnir/mrkthr.git)]) 
 
 AC_OUTPUT
