@@ -5,6 +5,9 @@ noinst_PROGRAMS=testfoo testdaemonize testhttp testhttpuri testmnhttpc
 
 noinst_HEADERS = unittest.h
 
+BUILT_SOURCES = ../src/diag.c ../src/diag.h
+
+
 DEBUG_LD_FLAGS =
 if DEBUG
 DEBUG_CC_FLAGS = -g -O0 @CC_DEBUG@
