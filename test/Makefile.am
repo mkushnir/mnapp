@@ -5,9 +5,6 @@ noinst_PROGRAMS=testfoo testdaemonize testhttp testhttpuri testmnhttpc
 
 noinst_HEADERS = unittest.h
 
-BUILT_SOURCES = ../src/diag.c ../src/diag.h
-
-
 DEBUG_LD_FLAGS =
 if DEBUG
 DEBUG_CC_FLAGS = -g -O0 @CC_DEBUG@
@@ -36,8 +33,6 @@ endif
 
 common_sources = ../src/bytestream_ssl_helper.c \
 		  ../src/daemonize.c \
-		  ../src/diag.c \
-		  ../src/diag.h \
 		  ../src/local_server.c \
 		  ../src/mncommand.c \
 		  ../src/mnhttp.c \
