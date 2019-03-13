@@ -56,10 +56,18 @@ mncommand_ctx_format_help(mncommand_ctx_t *ctx, mnbytestream_t *bs)
 
                 while (true) {
                     size_t ncopy;
-                    char buf[LINEW - SPECW];
-                    ncopy = MIN(ntail, sizeof(buf) - 1);
+                    char buf[LINEW - SPECW + 1 /* optional dash */];
+                    ncopy = MIN(ntail,
+                                sizeof(buf)
+                                    - 1 /* optional dash */
+                                    - 1 /* term zero */);
                     memcpy(buf, s + nhead, ncopy);
-                    buf[ncopy] = '\0';
+                    if (isalnum(s[ncopy - 1])) {
+                        buf[ncopy] = '-';
+                        buf[ncopy + 1] = '\0';
+                    } else {
+                        buf[ncopy] = '\0';
+                    }
                     (void)bytestream_nprintf(bs, 1024, "%s\n", buf);
                     ntail -= ncopy;
                     nhead += ncopy;
