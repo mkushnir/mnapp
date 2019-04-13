@@ -41,7 +41,7 @@ endif
 libmrkapp_la_CFLAGS = $(DEBUG_CC_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ @_XOPEN_SOURCE_MACRO@ -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
 
 libmrkapp_la_LDFLAGS += $(DEBUG_LD_FLAGS) -version-info 0:0:0 -L$(libdir)
-libmrkapp_la_LIBADD = -lmrkthr -lmrkcommon -lmndiag -lcrypto -lssl -lz
+libmrkapp_la_LIBADD = -lmrkthr -lmrkcommon -lmndiag -lcrypto -lssl
 
 diag.c diag.h: $(diags)
 	$(AM_V_GEN) cat $(diags) | sort -u >diag.txt.tmp && mndiagen -v -S diag.txt.tmp -L mrkapp -H diag.h -C diag.c *.[ch]
