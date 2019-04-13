@@ -62,7 +62,8 @@ mncommand_ctx_format_help(mncommand_ctx_t *ctx, mnbytestream_t *bs)
                                     - 1 /* optional dash */
                                     - 1 /* term zero */);
                     memcpy(buf, s + nhead, ncopy);
-                    if (isalnum(s[ncopy - 1])) {
+                    if (isalnum(s[nhead + ncopy - 1]) &&
+                            isalnum(s[nhead + ncopy])) {
                         buf[ncopy] = '-';
                         buf[ncopy + 1] = '\0';
                     } else {
