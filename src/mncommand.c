@@ -131,21 +131,25 @@ mncommand_ctx_getopt(mncommand_ctx_t *ctx,
                      char *argv[],
                      void *udata)
 {
+    int res;
     mnbytestream_t bs;
     struct option *options;
+
+    bytestream_init(&bs, 1024);
 
     if (ctx->progname == NULL) {
         char *s = basename(argv[0]);
         ctx->progname = bytes_new_from_str(s);
     }
 
-    bytestream_init(&bs, 1024);
     (void)array_traverse(&ctx->commands, (array_traverser_t)getopt_symbol, &bs);
     /* terminating null */
     bytestream_cat(&bs, 1, "");
 
     if ((options = array_get(&ctx->options, 0)) == NULL) {
-        TRRET(MNCOMMAND_CTX_GETOPT + 1);
+        res = MNCOMMAND_CTX_GETOPT + 1;
+        TR(res);
+        goto end;
     }
 
     //TRACE("opts=%s", SDATA(&bs, 0));
@@ -168,7 +172,9 @@ mncommand_ctx_getopt(mncommand_ctx_t *ctx,
 
         if ((cmd = mncommand_ctx_find_cmd(ctx, curropt, ch)) == NULL) {
             //TRACE("getopt_long error");
-            goto err;
+            res = MNCOMMAND_CTX_GETOPT + 2;
+            TR(res);
+            goto end;
 
         } else {
             //TRACE("longname=%s, optarg=%s helpspec=%s",
@@ -176,18 +182,18 @@ mncommand_ctx_getopt(mncommand_ctx_t *ctx,
             //      optarg,
             //      BDATA(cmd->helpspec));
             if (cmd->func != NULL) {
-                if (cmd->func(ctx, cmd, optarg, udata) != 0) {
-                    break;
+                if ((res = cmd->func(ctx, cmd, optarg, udata)) != 0) {
+                    goto end;
                 }
             }
         }
     }
 
-    bytestream_fini(&bs);
+    res = optind;
 
-    return optind;
-err:
-    return -1;
+end:
+    bytestream_fini(&bs);
+    return res;
 }
 
 
