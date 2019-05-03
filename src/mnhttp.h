@@ -178,7 +178,7 @@ int http_field_addt(mnbytestream_t *, mnbytes_t *, time_t);
     (void)bytestream_nprintf(out,                      \
                              4096 + BSZ(val),          \
                              name ": %s\r\n",          \
-                             (char *)BDATA(val))       \
+                             BCDATA(val))              \
 
 
 #define MRKHTTP_PRINTF_HEADER_RFC1123(out, name, val)          \

@@ -50,7 +50,7 @@ mncommand_ctx_format_help(mncommand_ctx_t *ctx, mnbytestream_t *bs)
                 char *s;
                 size_t nhead, ntail;
 
-                s = (char *)BDATA(cmd->description);
+                s = BCDATA(cmd->description);
                 nhead = 0;
                 ntail = BSZ(cmd->description) - 1;
 
@@ -255,7 +255,7 @@ mncommand_ctx_add_cmd(mncommand_ctx_t *ctx,
         BYTES_INCREF(cmd->description);
     }
     cmd->func = func;
-    cmd->opt.name = (const char *)BDATASAFE(cmd->longname);
+    cmd->opt.name = BCDATASAFE(cmd->longname);
     cmd->opt.has_arg = has_arg;
     cmd->opt.flag = &cmd->flag;
     cmd->opt.val = shortname;

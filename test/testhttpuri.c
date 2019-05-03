@@ -390,7 +390,7 @@ test0(void)
     if (data[i].f == NULL) {                                           \
         assert(uri.f == NULL);                                         \
     } else {                                                           \
-        assert(strcmp(data[i].f, (char *)BDATA(uri.f)) == 0);          \
+        assert(strcmp(data[i].f, BCDATA(uri.f)) == 0);                 \
     }                                                                  \
 
 

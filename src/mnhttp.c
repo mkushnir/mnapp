@@ -209,7 +209,7 @@ mnhttp_uri_add_qterm(mnhttp_uri_t *uri, mnbytes_t *key, mnbytes_t *value)
 
 #define MRKHTTP_PARSE_KVP_BODY(keydecode, valdecode)                   \
     int res;                                                           \
-    char *ss = (char *)BDATA(s);                                       \
+    char *ss = BCDATA(s);                                              \
     size_t i0, i1, j;                                                  \
                                                                        \
                                                                        \
@@ -675,8 +675,8 @@ http_field_addf(mnbytestream_t *out,
     value = bytes_vprintf(fmt, ap);
     va_end(ap);
     res = http_add_header_field(out,
-                                (char *)BDATA(name),
-                                (char *)BDATA(value));
+                                BCDATA(name),
+                                BCDATA(value));
     BYTES_DECREF(&value);
     return res;
 }
@@ -690,8 +690,8 @@ http_field_addb(mnbytestream_t *out,
     assert(name != NULL);
     assert(value != NULL);
     return http_add_header_field(out,
-                                 (char *)BDATA(name),
-                                 (char *)BDATA(value));
+                                 BCDATA(name),
+                                 BCDATA(value));
 }
 
 
@@ -711,8 +711,8 @@ http_field_addt(mnbytestream_t *out,
                  tv);
     value = bytes_new_from_str_len(buf, n);
     res = http_add_header_field(out,
-                                (char *)BDATA(name),
-                                (char *)BDATA(value));
+                                BCDATA(name),
+                                BCDATA(value));
     BYTES_DECREF(&value);
     return res;
 }

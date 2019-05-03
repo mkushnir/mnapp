@@ -658,8 +658,8 @@ mnhttpc_connection_connect(mnhttpc_connection_t *conn)
         peer_port = conn->port;
     }
     if ((conn->fd = mrkthr_socket_connect(
-                (char *)BDATA(peer_host),
-                (char *)BDATA(peer_port),
+                BCDATA(peer_host),
+                BCDATA(peer_port),
                 AF_UNSPEC)) == -1) {
         res = MRKHTTPC_CONNECTION_CONNECT + 1;
 
@@ -778,7 +778,7 @@ mnhttpc_new(mnhttpc_t *cli,
     req->out_body_cb = out_body_cb;
     req->out_body_cb_udata = out_body_cb_udata;
     req->in_body_cb = in_body_cb;
-    mnhttp_uri_parse(&req->request.out.uri, (char *)BDATA(uri));
+    mnhttp_uri_parse(&req->request.out.uri, BCDATA(uri));
 
     if (bytes_is_null_or_empty(req->request.out.uri.host)) {
         goto err;
