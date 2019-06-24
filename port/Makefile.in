@@ -1,0 +1,31 @@
+PORTNAME=	@PACKAGE_NAME@
+PORTVERSION=	@PACKAGE_VERSION@
+CATEGORIES=	devel
+MASTER_SITES=	file:///data0/mkushnir/distfiles
+
+PKGORIGIN=	${PKGCATEGORY}/${PORTNAME}
+
+MAINTAINER=	markiyan.kushnir@gmail.com
+COMMENT=	Markiyan\'s app components
+LICENSE=	BSD2CLAUSE
+
+DISTDIR=/data0/mkushnir/distfiles
+
+GNU_CONFIGURE=	yes
+CONFIGURE_ENV=	LDFLAGS="-L${LOCALBASE}/lib -L${HOME}/lib" CFLAGS=-I${HOME}/include
+
+PLIST_FILES=	include/mrkapp.h \
+		include/mnhttp.h \
+		include/mnhttpc.h \
+		include/mncommand.h \
+		lib/libmrkapp.a \
+		lib/libmrkapp.la \
+		lib/libmrkapp.so \
+		lib/libmrkapp.so.0 \
+		lib/libmrkapp.so.0.0.0
+
+PLIST_DIRS=	lib include
+
+.include <bsd.port.mk>
+
+
