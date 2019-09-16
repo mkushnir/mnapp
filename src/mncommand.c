@@ -3,6 +3,10 @@
 #include <ctype.h>
 #include <getopt.h>
 #include <libgen.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <inttypes.h>
+#include <strings.h>
 
 #include <mrkcommon/array.h>
 #include <mrkcommon/bytes.h>
@@ -230,13 +234,72 @@ mncommand_cmd_compute_helpspec(mncommand_cmd_t *cmd)
     BYTES_DECREF(&argspec);
 }
 
+
+int
+mncommand_option_int(UNUSED mncommand_ctx_t *ctx,
+                     mncommand_cmd_t *cmd,
+                     const char *optarg,
+                     UNUSED void *udata)
+{
+    intmax_t *v = cmd->udata;
+    *v = strtoimax(optarg, NULL, 10);
+    return 0;
+}
+
+
+int
+mncommand_option_double(UNUSED mncommand_ctx_t *ctx,
+                        mncommand_cmd_t *cmd,
+                        const char *optarg,
+                        UNUSED void *udata)
+{
+    double *v = cmd->udata;
+    *v = strtod(optarg, NULL);
+    return 0;
+}
+
+
+int
+mncommand_option_bool(UNUSED mncommand_ctx_t *ctx,
+                      mncommand_cmd_t *cmd,
+                      const char *optarg,
+                      UNUSED void *udata)
+{
+    bool *v = cmd->udata;
+    if (strcasecmp(optarg, "0") == 0 ||
+        strcasecmp(optarg, "off") == 0 ||
+        strcasecmp(optarg, "false") == 0 ||
+        strcasecmp(optarg, "no") == 0 ) {
+        *v = false;
+    } else {
+        *v = true;
+    }
+    return 0;
+}
+
+
+int
+mncommand_option_bytes(UNUSED mncommand_ctx_t *ctx,
+                       mncommand_cmd_t *cmd,
+                       const char *optarg,
+                       UNUSED void *udata)
+{
+    mnbytes_t **v = cmd->udata;
+    BYTES_DECREF(v);
+    *v = bytes_new_from_str(optarg);
+    BYTES_INCREF(*v);
+    return 0;
+}
+
+
 int
 mncommand_ctx_add_cmd(mncommand_ctx_t *ctx,
                       mnbytes_t *longname,
                       int shortname,
                       int has_arg,
                       mnbytes_t *description,
-                      mncommand_option_func_t func)
+                      mncommand_option_func_t func,
+                      void *udata)
 {
     mncommand_cmd_t *cmd;
     struct option *opt;
@@ -255,6 +318,7 @@ mncommand_ctx_add_cmd(mncommand_ctx_t *ctx,
         BYTES_INCREF(cmd->description);
     }
     cmd->func = func;
+    cmd->udata = udata;
     cmd->opt.name = BCDATASAFE(cmd->longname);
     cmd->opt.has_arg = has_arg;
     cmd->opt.flag = &cmd->flag;

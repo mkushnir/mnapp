@@ -23,6 +23,7 @@ typedef struct _mncommand_cmd {
     mnbytes_t *helpspec;
     struct option opt;
     mncommand_option_func_t func;
+    void *udata;
 } mncommand_cmd_t;
 
 
@@ -47,7 +48,47 @@ int mncommand_ctx_add_cmd(mncommand_ctx_t *,
                           int,
                           int,
                           mnbytes_t *,
-                          mncommand_option_func_t);
+                          mncommand_option_func_t,
+                          void *);
+
+int mncommand_option_int(mncommand_ctx_t *,
+                         mncommand_cmd_t *,
+                         const char *,
+                         void *);
+
+int mncommand_option_double(mncommand_ctx_t *,
+                            mncommand_cmd_t *,
+                            const char *,
+                            void *);
+
+int mncommand_option_bool(mncommand_ctx_t *,
+                          mncommand_cmd_t *,
+                          const char *,
+                          void *);
+
+int mncommand_option_bytes(mncommand_ctx_t *,
+                           mncommand_cmd_t *,
+                           const char *,
+                           void *);
+
+#define MNCOMMAND_CTX_ADD_CMDTG(ctx,                                   \
+                                longname,                              \
+                                shortname,                             \
+                                has_arg,                               \
+                                description,                           \
+                                value)                                 \
+    mncommand_ctx_add_cmd(ctx,                                         \
+                          longname,                                    \
+                          shortname,                                   \
+                          has_arg,                                     \
+                          description,                                 \
+                          _Generic(value,                              \
+                              intmax_t *: mncommand_option_int,        \
+                              double *: mncommand_option_double,       \
+                              bool *: mncommand_option_bool,           \
+                              mnbytes_t **: mncommand_option_bytes),   \
+                          value)                                       \
+
 
 int mncommand_ctx_init(mncommand_ctx_t *);
 int mncommand_ctx_fini(mncommand_ctx_t *);
