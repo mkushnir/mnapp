@@ -1,7 +1,10 @@
 #ifndef MNCOMMAND_H
 #define MNCOMMAND_H
 
+#include <stdbool.h>
+#include <stdint.h>
 #include <getopt.h>
+
 #include <mrkcommon/bytes.h>
 #include <mrkcommon/bytestream.h>
 #include <mrkcommon/array.h>
