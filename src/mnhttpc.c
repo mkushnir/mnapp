@@ -417,7 +417,12 @@ mnhttpc_connection_send_worker(UNUSED int argc, void **argv)
     while (true) {
         //D16(SDATA(&conn->out, 0), SEOD(&conn->out));
         if (SPOS(&conn->out) < 0) {
-            CTRACE("conn=%p out=%p produce %ld->%ld (%ld)", conn, &conn->out, SPOS(&conn->out), SEOD(&conn->out), SEOD(&conn->out) - SPOS(&conn->out));
+            CTRACE("conn=%p out=%p produce %ld->%ld (%ld)",
+                   conn,
+                   &conn->out,
+                   (long)SPOS(&conn->out),
+                   (long)SEOD(&conn->out),
+                   (long)(SEOD(&conn->out) - SPOS(&conn->out)));
             mrkthr_dump(mrkthr_me());
             D32(conn, sizeof(*conn));
         }

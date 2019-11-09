@@ -7,7 +7,6 @@
 //#define TRRET_DEBUG
 #include <mrkcommon/dumpm.h>
 
-#include <mrkcommon/bytestream.h>
 #include <mrkcommon/util.h>
 
 #include <mrkthr.h>
