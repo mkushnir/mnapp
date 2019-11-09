@@ -1,7 +1,7 @@
 #ifndef BYTESTREAM_SSL_HELPER_H
 #define BYTESTREAM_SSL_HELPER_H
 
-#include "mrkcommon/bytestream.h"
+#include <mrkcommon/bytestream.h>
 
 #ifdef __cplusplus
 extern "C" {
