@@ -419,8 +419,7 @@ mnhttp_uri_parse(mnhttp_uri_t *uri, const char *s)
         }
     }
     if (uri->scheme == MNHTTPC_MESSAGE_SCHEME_UNDEF) {
-        BYTES_ALLOCA(https, "443");
-        if (bytes_cmp(uri->port, https) == 0) {
+        if (bytes_cmp(uri->port, BYTES_REF("443")) == 0) {
             uri->scheme = MNHTTPC_MESSAGE_SCHEME_HTTPS;
         } else {
             uri->scheme = MNHTTPC_MESSAGE_SCHEME_HTTP;

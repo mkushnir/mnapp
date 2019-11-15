@@ -843,9 +843,6 @@ mnhttpc_request_finalize(mnhttpc_request_t *req)
 {
     int res;
     mnhttpc_connection_t *conn;
-    BYTES_ALLOCA(_host, "Host");
-    BYTES_ALLOCA(_user_agent, "User-Agent");
-    BYTES_ALLOCA(_date, "Date");
     mnhash_item_t *hit;
     mnhash_iter_t it;
 
@@ -874,14 +871,14 @@ mnhttpc_request_finalize(mnhttpc_request_t *req)
         goto end0;
     }
 
-    (void)http_field_addt(&conn->out, _date, MRKTHR_GET_NOW_SEC());
+    (void)http_field_addt(&conn->out, BYTES_REF("Date"), MRKTHR_GET_NOW_SEC());
     (void)http_field_addf(&conn->out,
-                          _host,
+                          BYTES_REF("Host"),
                           "%s:%s",
                           BDATA(req->request.out.uri.host),
                           BDATA(req->request.out.uri.port));
     (void)http_field_addf(&conn->out,
-                          _user_agent,
+                          BYTES_REF("User-Agent"),
                           "%s/%s",
                           PACKAGE,
                           VERSION);
