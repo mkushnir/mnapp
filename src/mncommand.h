@@ -47,10 +47,10 @@ void mncommand_ctx_format_help(mncommand_ctx_t *, mnbytestream_t *);
 int mncommand_ctx_getopt(mncommand_ctx_t *, int, char *[], void *);
 
 int mncommand_ctx_add_cmd(mncommand_ctx_t *,
-                          mnbytes_t *,
+                          const mnbytes_t *,
                           int,
                           int,
-                          mnbytes_t *,
+                          const mnbytes_t *,
                           mncommand_option_func_t,
                           void *);
 

@@ -661,7 +661,7 @@ http_add_header_field(mnbytestream_t *out,
 
 int PRINTFLIKE(3, 4)
 http_field_addf(mnbytestream_t *out,
-                mnbytes_t *name,
+                const mnbytes_t *name,
                 const char *fmt,
                 ...)
 {
@@ -683,8 +683,8 @@ http_field_addf(mnbytestream_t *out,
 
 int
 http_field_addb(mnbytestream_t *out,
-                mnbytes_t *name,
-                mnbytes_t *value)
+                const mnbytes_t *name,
+                const mnbytes_t *value)
 {
     assert(name != NULL);
     assert(value != NULL);
@@ -696,7 +696,7 @@ http_field_addb(mnbytestream_t *out,
 
 int
 http_field_addt(mnbytestream_t *out,
-                mnbytes_t *name,
+                const mnbytes_t *name,
                 time_t t)
 {
     int res;

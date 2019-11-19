@@ -294,10 +294,10 @@ mncommand_option_bytes(UNUSED mncommand_ctx_t *ctx,
 
 int
 mncommand_ctx_add_cmd(mncommand_ctx_t *ctx,
-                      mnbytes_t *longname,
+                      const mnbytes_t *longname,
                       int shortname,
                       int has_arg,
-                      mnbytes_t *description,
+                      const mnbytes_t *description,
                       mncommand_option_func_t func,
                       void *udata)
 {
@@ -309,17 +309,19 @@ mncommand_ctx_add_cmd(mncommand_ctx_t *ctx,
     }
 
     assert(longname != NULL);
-    cmd->longname = longname;
-    if (cmd->longname != NULL) {
-        BYTES_INCREF(cmd->longname);
-    }
-    cmd->description = description;
-    if (cmd->description != NULL) {
+    BYTES_DECREF(&cmd->longname);
+    cmd->longname = bytes_new_from_bytes(longname);
+    BYTES_INCREF(cmd->longname);
+
+    BYTES_DECREF(&cmd->description);
+    if (description != NULL) {
+        cmd->description = bytes_new_from_bytes(description);
         BYTES_INCREF(cmd->description);
     }
+
     cmd->func = func;
     cmd->udata = udata;
-    cmd->opt.name = BCDATASAFE(cmd->longname);
+    cmd->opt.name = BCDATA(cmd->longname);
     cmd->opt.has_arg = has_arg;
     cmd->opt.flag = &cmd->flag;
     cmd->opt.val = shortname;

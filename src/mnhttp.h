@@ -151,11 +151,11 @@ int http_start_request(mnbytestream_t *, const char *, const char *);
 int http_start_response(mnbytestream_t *, int, const char *);
 int http_add_header_field(mnbytestream_t *, const char *, const char *);
 int PRINTFLIKE(3, 4) http_field_addf(mnbytestream_t *,
-                                     mnbytes_t *,
+                                     const mnbytes_t *,
                                      const char *,
                                      ...);
-int http_field_addb(mnbytestream_t *, mnbytes_t *, mnbytes_t *);
-int http_field_addt(mnbytestream_t *, mnbytes_t *, time_t);
+int http_field_addb(mnbytestream_t *, const mnbytes_t *, const mnbytes_t *);
+int http_field_addt(mnbytestream_t *, const mnbytes_t *, time_t);
 
 
 #define MRKHTTP_PRINTF_HEADER(out, name, fmt, ...)                             \

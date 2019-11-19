@@ -96,9 +96,9 @@ typedef struct _mnhttpc {
 
 void mnhttpc_request_destroy(mnhttpc_request_t **req);
 mnhttpc_request_t *mnhttpc_new(mnhttpc_t *,
-                               mnbytes_t *,
-                               mnbytes_t *,
-                               mnbytes_t *,
+                               const mnbytes_t *,
+                               const mnbytes_t *,
+                               const mnbytes_t *,
                                const char *,
                                mnhttpc_request_body_cb_t,
                                void *,

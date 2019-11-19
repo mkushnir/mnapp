@@ -377,10 +377,10 @@ mnhttpc_connection_init(mnhttpc_connection_t *conn, int scheme)
 
 
 static mnhttpc_connection_t *
-mnhttpc_connection_new(mnbytes_t *proxy_host,
-                       mnbytes_t *proxy_port,
-                       mnbytes_t *host,
-                       mnbytes_t *port,
+mnhttpc_connection_new(const mnbytes_t *proxy_host,
+                       const mnbytes_t *proxy_port,
+                       const mnbytes_t *host,
+                       const mnbytes_t *port,
                        int scheme)
 {
     mnhttpc_connection_t *conn;
@@ -391,17 +391,17 @@ mnhttpc_connection_new(mnbytes_t *proxy_host,
 
     mnhttpc_connection_init(conn, scheme);
     if (proxy_host != NULL) {
-        conn->proxy_host = proxy_host;
-        BYTES_INCREF(proxy_host);
+        conn->proxy_host = bytes_new_from_bytes(proxy_host);
+        BYTES_INCREF(conn->proxy_host);
     }
     if (proxy_port != NULL) {
-        conn->proxy_port = proxy_port;
-        BYTES_INCREF(proxy_port);
+        conn->proxy_port = bytes_new_from_bytes(proxy_port);
+        BYTES_INCREF(conn->proxy_port);
     }
-    conn->host = host;
-    BYTES_INCREF(host);
-    conn->port = port;
-    BYTES_INCREF(port);
+    conn->host = bytes_new_from_bytes(host);
+    BYTES_INCREF(conn->host);
+    conn->port = bytes_new_from_bytes(port);
+    BYTES_INCREF(conn->port);
     return conn;
 }
 
@@ -766,9 +766,9 @@ mnhttpc_fini(mnhttpc_t *cli)
 
 mnhttpc_request_t *
 mnhttpc_new(mnhttpc_t *cli,
-            mnbytes_t *proxy_host,
-            mnbytes_t *proxy_port,
-            mnbytes_t *uri,
+            const mnbytes_t *proxy_host,
+            const mnbytes_t *proxy_port,
+            const mnbytes_t *uri,
             const char *method,
             mnhttpc_request_body_cb_t out_body_cb,
             void *out_body_cb_udata,
@@ -776,7 +776,7 @@ mnhttpc_new(mnhttpc_t *cli,
 {
     mnhttpc_request_t *req;
     mnhash_item_t *hit;
-    mnhttpc_connection_t *conn, probe;
+    mnhttpc_connection_t *conn;
 
     req = mnhttpc_request_new();
     req->request.out.method = method;
@@ -801,12 +801,14 @@ mnhttpc_new(mnhttpc_t *cli,
         goto err;
     }
 
-    probe.hash = 0;
-    probe.proxy_host = proxy_host;
-    probe.proxy_port = proxy_port;
-    probe.host = req->request.out.uri.host;
-    probe.port = req->request.out.uri.port;
-    if ((hit = hash_get_item(&cli->connections, &probe)) == NULL) {
+    if ((hit = hash_get_item(&cli->connections,
+                             &(const mnhttpc_connection_t){
+                                .hash = 0,
+                                .proxy_host = (mnbytes_t *)proxy_host,
+                                .proxy_port = (mnbytes_t *)proxy_port,
+                                .host = req->request.out.uri.host,
+                                .port = req->request.out.uri.port,
+                             })) == NULL) {
         conn = mnhttpc_connection_new(proxy_host,
                                       proxy_port,
                                       req->request.out.uri.host,
