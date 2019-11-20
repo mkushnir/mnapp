@@ -92,6 +92,7 @@ int mncommand_option_bytes(mncommand_ctx_t *,
                           description,                                 \
                           _Generic(value,                              \
                               intmax_t *: mncommand_option_int,        \
+                              uintmax_t *: mncommand_option_uint,      \
                               double *: mncommand_option_double,       \
                               bool *: mncommand_option_bool,           \
                               mnbytes_t **: mncommand_option_bytes),   \
