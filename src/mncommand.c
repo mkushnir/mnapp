@@ -253,6 +253,18 @@ mncommand_option_int(UNUSED mncommand_ctx_t *ctx,
 
 
 int
+mncommand_option_uint(UNUSED mncommand_ctx_t *ctx,
+                      mncommand_cmd_t *cmd,
+                      const char *optarg,
+                      UNUSED void *udata)
+{
+    uintmax_t *v = cmd->udata;
+    *v = strtoumax(optarg, NULL, 10);
+    return 0;
+}
+
+
+int
 mncommand_option_double(UNUSED mncommand_ctx_t *ctx,
                         mncommand_cmd_t *cmd,
                         const char *optarg,

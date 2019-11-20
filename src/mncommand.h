@@ -59,6 +59,11 @@ int mncommand_option_int(mncommand_ctx_t *,
                          const char *,
                          void *);
 
+int mncommand_option_uint(mncommand_ctx_t *,
+                          mncommand_cmd_t *,
+                          const char *,
+                          void *);
+
 int mncommand_option_double(mncommand_ctx_t *,
                             mncommand_cmd_t *,
                             const char *,
