@@ -108,7 +108,7 @@ getopt_symbol(mncommand_cmd_t *cmd, mnbytestream_t *bs)
 
 
 static mncommand_cmd_t *
-mncommand_ctx_find_cmd(mncommand_ctx_t *ctx, int curropt, int optarg)
+mncommand_ctx_find_cmd(mncommand_ctx_t *ctx, int curropt, int optch)
 {
     mncommand_cmd_t *res;
 
@@ -118,7 +118,7 @@ mncommand_ctx_find_cmd(mncommand_ctx_t *ctx, int curropt, int optarg)
         for (res = array_first(&ctx->commands, &it);
              res != NULL;
              res = array_next(&ctx->commands, &it)) {
-            if (res->opt.val == optarg) {
+            if (res->opt.val == optch) {
                 break;
             }
         }
@@ -149,6 +149,11 @@ mncommand_ctx_getopt(mncommand_ctx_t *ctx,
     (void)array_traverse(&ctx->commands, (array_traverser_t)getopt_symbol, &bs);
     /* terminating null */
     bytestream_cat(&bs, 1, "");
+
+    if (MRKUNLIKELY((options = array_incr(&ctx->options)) == NULL)) {
+        FFAIL("array_incr");
+    }
+    *options = (struct option){0};
 
     if ((options = array_get(&ctx->options, 0)) == NULL) {
         res = MNCOMMAND_CTX_GETOPT + 1;
