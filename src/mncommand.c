@@ -283,10 +283,10 @@ mncommand_option_bool(UNUSED mncommand_ctx_t *ctx,
                       UNUSED void *udata)
 {
     bool *v = cmd->udata;
-    if (strcasecmp(optarg, "0") == 0 ||
+    if ((optarg != NULL) && (strcasecmp(optarg, "0") == 0 ||
         strcasecmp(optarg, "off") == 0 ||
         strcasecmp(optarg, "false") == 0 ||
-        strcasecmp(optarg, "no") == 0 ) {
+        strcasecmp(optarg, "no") == 0)) {
         *v = false;
     } else {
         *v = true;
