@@ -103,6 +103,7 @@ getopt_symbol(mncommand_cmd_t *cmd, mnbytestream_t *bs)
             bytestream_cat(bs, 1, ":");
         }
     }
+    cmd->opt.flag = &cmd->flag;
     return 0;
 }
 
@@ -138,6 +139,8 @@ mncommand_ctx_getopt(mncommand_ctx_t *ctx,
     int res;
     mnbytestream_t bs;
     struct option *options;
+    mncommand_cmd_t *cmd;
+    mnarray_iter_t it;
 
     bytestream_init(&bs, 1024);
 
@@ -146,6 +149,16 @@ mncommand_ctx_getopt(mncommand_ctx_t *ctx,
         ctx->progname = bytes_new_from_str(s);
     }
 
+    // fixups
+    for (cmd = array_first(&ctx->commands, &it);
+         cmd != NULL;
+         cmd = array_next(&ctx->commands, &it)) {
+        struct option *opt = ARRAY_GET(struct option, &ctx->options, it.iter);
+        cmd->opt.flag = &cmd->flag;
+        opt->flag = &cmd->flag;
+    }
+
+    // build getopt_long(3) symbols
     (void)array_traverse(&ctx->commands, (array_traverser_t)getopt_symbol, &bs);
     /* terminating null */
     bytestream_cat(&bs, 1, "");
@@ -186,10 +199,6 @@ mncommand_ctx_getopt(mncommand_ctx_t *ctx,
             goto end;
 
         } else {
-            //TRACE("longname=%s, optarg=%s helpspec=%s",
-            //      BDATA(cmd->longname),
-            //      optarg,
-            //      BDATA(cmd->helpspec));
             if (cmd->func != NULL) {
                 if ((res = cmd->func(ctx, cmd, optarg, udata)) != 0) {
                     goto end;
@@ -340,7 +349,7 @@ mncommand_ctx_add_cmd(mncommand_ctx_t *ctx,
     cmd->udata = udata;
     cmd->opt.name = BCDATA(cmd->longname);
     cmd->opt.has_arg = has_arg;
-    cmd->opt.flag = &cmd->flag;
+    cmd->opt.flag = NULL; // fixup later, set to cmd->flag
     cmd->opt.val = shortname;
     mncommand_cmd_compute_helpspec(cmd);
 
