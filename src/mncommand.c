@@ -256,7 +256,12 @@ mncommand_option_int(UNUSED mncommand_ctx_t *ctx,
                      UNUSED void *udata)
 {
     intmax_t *v = cmd->udata;
-    *v = strtoimax(optarg, NULL, 10);
+
+    if (optarg != NULL) {
+        *v = strtoimax(optarg, NULL, 10);
+    } else {
+        *v = (intmax_t)cmd->opt.val;
+    }
     return 0;
 }
 
@@ -268,7 +273,12 @@ mncommand_option_uint(UNUSED mncommand_ctx_t *ctx,
                       UNUSED void *udata)
 {
     uintmax_t *v = cmd->udata;
-    *v = strtoumax(optarg, NULL, 10);
+
+    if (optarg != NULL) {
+        *v = strtoumax(optarg, NULL, 10);
+    } else {
+        *v = (uintmax_t)cmd->opt.val;
+    }
     return 0;
 }
 
@@ -280,7 +290,10 @@ mncommand_option_double(UNUSED mncommand_ctx_t *ctx,
                         UNUSED void *udata)
 {
     double *v = cmd->udata;
-    *v = strtod(optarg, NULL);
+
+    if (optarg != NULL) {
+        *v = strtod(optarg, NULL);
+    }
     return 0;
 }
 
@@ -312,8 +325,10 @@ mncommand_option_bytes(UNUSED mncommand_ctx_t *ctx,
 {
     mnbytes_t **v = cmd->udata;
     BYTES_DECREF(v);
-    *v = bytes_new_from_str(optarg);
-    BYTES_INCREF(*v);
+    if (optarg != NULL) {
+        *v = bytes_new_from_str(optarg);
+        BYTES_INCREF(*v);
+    }
     return 0;
 }
 
