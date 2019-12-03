@@ -19,6 +19,31 @@
 #include "diag.h"
 
 
+static size_t
+mncommand_find_ncopy(const char *s, size_t nhead, size_t ntail, size_t bufsz)
+{
+    size_t ncopy = MIN(ntail,
+                       bufsz
+                       - 1 /* optional dash */
+                       - 1 /* term zero */);
+    size_t n = ncopy;
+
+    if (ncopy == (bufsz - 2)) {
+        while (n > 0) {
+            if (isspace(s[nhead + n])) {
+                ncopy = n;
+                goto end;
+            } else {
+                --n;
+            }
+        }
+    }
+
+end:
+    return ncopy;
+}
+
+
 void
 mncommand_ctx_format_help(mncommand_ctx_t *ctx, mnbytestream_t *bs)
 {
@@ -61,10 +86,13 @@ mncommand_ctx_format_help(mncommand_ctx_t *ctx, mnbytestream_t *bs)
                 while (true) {
                     size_t ncopy;
                     char buf[LINEW - SPECW + 1 /* optional dash */];
-                    ncopy = MIN(ntail,
-                                sizeof(buf)
-                                    - 1 /* optional dash */
-                                    - 1 /* term zero */);
+
+                    ncopy = mncommand_find_ncopy(s, nhead, ntail, sizeof(buf));
+                    while (isspace(s[nhead])) {
+                        ++nhead;
+                        --ntail;
+                        --ncopy;
+                    }
                     memcpy(buf, s + nhead, ncopy);
                     if (isalnum(s[nhead + ncopy - 1]) &&
                             isalnum(s[nhead + ncopy])) {
