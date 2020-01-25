@@ -1,8 +1,6 @@
 #include <assert.h>
 #include <stdbool.h>
 
-#include <openssl/ssl.h>
-
 #include <mncommon/dumpm.h>
 #include <mncommon/util.h>
 

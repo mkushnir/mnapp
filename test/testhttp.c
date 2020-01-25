@@ -6,8 +6,11 @@
 #define TRRET_DEBUG
 #include <mncommon/dumpm.h>
 #include <mncommon/util.h>
-#include <mnapp.h>
+
+#include <mnthr.h>
+
 #include <mnhttp.h>
+#include <mntcps.h>
 
 #include "diag.h"
 

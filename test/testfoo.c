@@ -7,7 +7,7 @@
 #include <mncommon/dumpm.h>
 #include <mncommon/util.h>
 
-#include <mnapp.h>
+#include <mntcps.h>
 
 #include "diag.h"
 

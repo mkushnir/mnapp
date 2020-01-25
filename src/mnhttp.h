@@ -4,9 +4,10 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <time.h>
-#include "mncommon/bytes.h"
-#include "mncommon/hash.h"
-#include "mncommon/bytestream.h"
+
+#include <mncommon/bytes.h>
+#include <mncommon/hash.h>
+#include <mncommon/bytestream.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -134,6 +134,13 @@ AC_ARG_ENABLE(lto,
 
 AM_CONDITIONAL([LTO], [test "$enable_lto" = "yes"])
 
+AC_ARG_ENABLE(thin,
+              AC_HELP_STRING([--enable-thin],
+                             [Enable thin build (default=no)]))
+
+AM_CONDITIONAL([THIN], [test "$enable_thin" = "yes"])
+
+
 # pass LDFLAGS=-L${LOCALBASE}/lib in the environment
 dnl AC_CHECK_LIB(mncommon, mndiag_mncommon_str, [], [AC_MSG_FAILURE(libmncommon.so is required. Please find it at git@github.com:mkushnir/mncommon.git)]) 
 dnl AC_CHECK_LIB(mnthr, mndiag_mnthr_str, [], [AC_MSG_FAILURE(libmnthr.so is required. Please find it at git@github.com:mkushnir/mnthr.git)]) 

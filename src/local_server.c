@@ -14,7 +14,7 @@
 
 #include <mnthr.h>
 
-#include <mnapp.h>
+#include <mntcps.h>
 
 #include "diag.h"
 
