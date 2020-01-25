@@ -3,8 +3,8 @@
 
 #include <openssl/ssl.h>
 
-#include <mrkcommon/dumpm.h>
-#include <mrkcommon/util.h>
+#include <mncommon/dumpm.h>
+#include <mncommon/util.h>
 
 #include <mnhttpc.h>
 
@@ -89,7 +89,7 @@ run1(UNUSED int argc, UNUSED void **argv)
     for (i = 0; i < 5; ++i) {
         run_uri(&cli, uri1);
         run_uri(&cli, uri2);
-        if (mrkthr_sleep(2000) != 0) {
+        if (mnthr_sleep(2000) != 0) {
             break;
         }
     }
@@ -119,11 +119,11 @@ run0(UNUSED int argc, UNUSED void **argv)
         run_uri(&cli, uri1);
         run_uri(&cli, uri2);
 
-        if (mrkthr_sleep(5000) != 0) {
+        if (mnthr_sleep(5000) != 0) {
             break;
         }
         mnhttpc_gc(&cli);
-        if (mrkthr_sleep(ts) != 0) {
+        if (mnthr_sleep(ts) != 0) {
             break;
         }
         ts *= 2;
@@ -142,9 +142,9 @@ main(UNUSED int argc, UNUSED char **argv)
 {
     SSL_load_error_strings();
     SSL_library_init();
-    mrkthr_init();
-    //MRKTHR_SPAWN("run0", run0);
-    MRKTHR_SPAWN("run1", run1);
-    mrkthr_loop();
-    mrkthr_fini();
+    mnthr_init();
+    //MNTHR_SPAWN("run0", run0);
+    MNTHR_SPAWN("run1", run1);
+    mnthr_loop();
+    mnthr_fini();
 }

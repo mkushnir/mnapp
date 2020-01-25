@@ -1,7 +1,7 @@
 #ifndef UNITTEST_H
 #define UNITTEST_H
 
-#include "mrkcommon/util.h"
+#include "mncommon/util.h"
 
 #ifdef __cplusplus
 extern "C" {

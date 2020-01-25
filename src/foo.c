@@ -3,8 +3,8 @@
 #include <syslog.h>
 
 #include <foo.h>
-#include <mrkcommon/dumpm.h>
-#include <mrkcommon/util.h>
+#include <mncommon/dumpm.h>
+#include <mncommon/util.h>
 
 char message[BUFLEN];
 

@@ -1,4 +1,4 @@
-mrkapp
+mnapp
 ======
 
 Application components.
@@ -20,21 +20,21 @@ local\_server
 
 This module offers simple TCP or Unix socket server based on the async
 event-driven threading library
-[mrkthr](http://github.com/mkushnir/mrkthr).
+[mnthr](http://github.com/mkushnir/mnthr).
 
-The server context is contained in the `mrkapp_tcp_server_t` structure,
-and should be managed by `mrkapp_tcp_server_init()` and
-`mrkapp_tcp_server_fini()` pair.
+The server context is contained in the `mnapp_tcp_server_t` structure,
+and should be managed by `mnapp_tcp_server_init()` and
+`mnapp_tcp_server_fini()` pair.
 
-The server accepts a single handler of type `mrkapp_tcp_server_cb_t`, and
+The server accepts a single handler of type `mnapp_tcp_server_cb_t`, and
 a `void *` user data.
 
 Typical workflow within the context lifecycle is:
-`mrkapp_tcp_server_start()` -> `mrkapp_tcp_server_serve()` ->
-`mrkapp_tcp_server_stop()`.
+`mnapp_tcp_server_start()` -> `mnapp_tcp_server_serve()` ->
+`mnapp_tcp_server_stop()`.
 
 
-mrkhttp
+mnhttp
 -------
 
 This module provides basic parsers of the [HTTP/1.1
@@ -71,7 +71,7 @@ Combined request/response pattern can look like this (partial example):
     http_ctx_t *ctx;
 
     bytestream_init(&in, 1024);
-    in.read_more = mrkthr_bytestream_read_more;
+    in.read_more = mnthr_bytestream_read_more;
     ctx = http_ctx_new();
     in.udata = ctx;
 
@@ -79,7 +79,7 @@ Combined request/response pattern can look like this (partial example):
     /* check res */
 
     bytestream_init(&out, 1024);
-    out.write = mrkthr_bytestream_write;
+    out.write = mnthr_bytestream_write;
 
     (void)http_start_response(&out, 200, "OK");
     (void)http_end_of_header(&out);

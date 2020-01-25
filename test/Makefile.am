@@ -37,7 +37,7 @@ common_sources = ../src/bytestream_ssl_helper.c \
 		  ../src/mncommand.c \
 		  ../src/mnhttp.c \
 		  ../src/mnhttpc.c \
-		  ../src/mrkapp.c
+		  ../src/mnapp.c
 
 common_cflags = @_GNU_SOURCE_MACRO@ @_XOPEN_SOURCE_MACRO@ $(DEBUG_CC_FLAGS) -Wall -Wextra -Werror -std=c99 -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
 
@@ -45,29 +45,29 @@ testfoo_SOURCES = $(common_sources) testfoo.c
 
 testfoo_CFLAGS = $(common_cflags)
 testfoo_LDFLAGS += $(DEBUG_LD_FLAGS) -L$(top_srcdir)/src/.libs
-testfoo_LDADD = -lmrkapp
+testfoo_LDADD = -lmnapp
 
 testdaemonize_SOURCES = $(common_sources) testdaemonize.c
 
 testdaemonize_CFLAGS = $(common_cflags)
 testdaemonize_LDFLAGS += $(DEBUG_LD_FLAGS) -L$(top_srcdir)/src/.libs
-testdaemonize_LDADD = -lmrkapp
+testdaemonize_LDADD = -lmnapp
 
 testhttp_SOURCES = $(common_sources) testhttp.c
 
 testhttp_CFLAGS = $(common_cflags)
 testhttp_LDFLAGS += $(DEBUG_LD_FLAGS) -L$(top_srcdir)/src/.libs
-testhttp_LDADD = -lmrkapp
+testhttp_LDADD = -lmnapp
 
 testhttpuri_SOURCES = $(common_sources) testhttpuri.c
 testhttpuri_CFLAGS = $(common_cflags)
 testhttpuri_LDFLAGS += $(DEBUG_LD_FLAGS) -L$(top_srcdir)/src/.libs
-testhttpuri_LDADD = -lmrkapp
+testhttpuri_LDADD = -lmnapp
 
 testmnhttpc_SOURCES = $(common_sources) testmnhttpc.c
 testmnhttpc_CFLAGS = $(common_cflags)
 testmnhttpc_LDFLAGS += $(DEBUG_LD_FLAGS) -L$(top_srcdir)/src/.libs
-testmnhttpc_LDADD = -lmrkapp -lssl
+testmnhttpc_LDADD = -lmnapp -lssl
 
 testrun: all
 	for i in $(noinst_PROGRAMS); do if test -x ./$$i; then LD_LIBRARY_PATH=$(libdir) ./$$i; fi; done;

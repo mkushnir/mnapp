@@ -10,11 +10,11 @@
 #include <sys/un.h>
 
 //#define TRRET_DEBUG
-#include <mrkcommon/dumpm.h>
+#include <mncommon/dumpm.h>
 
-#include <mrkthr.h>
+#include <mnthr.h>
 
-#include <mrkapp.h>
+#include <mnapp.h>
 
 #include "diag.h"
 
@@ -80,20 +80,20 @@ local_server(UNUSED int argc, void **argv)
     }
 
     while (!_shutdown) {
-        mrkthr_socket_t *sockets = NULL;
+        mnthr_socket_t *sockets = NULL;
         off_t sz = 0, i;
 
-        if (mrkthr_accept_all(s, &sockets, &sz) != 0) {
+        if (mnthr_accept_all(s, &sockets, &sz) != 0) {
             break;
         }
         for (i = 0; i < sz; ++i) {
-            mrkthr_socket_t *psock;
+            mnthr_socket_t *psock;
             char buf[32];
 
             psock = sockets + i;
             snprintf(buf, sizeof(buf), "local_server @%d", psock->fd);
 
-            (void)MRKTHR_SPAWN(buf, cb, psock->fd, udata);
+            (void)MNTHR_SPAWN(buf, cb, psock->fd, udata);
         }
 
         if (sockets != NULL) {
@@ -114,10 +114,10 @@ local_server(UNUSED int argc, void **argv)
 
 
 void
-mrkapp_tcp_server_init(mrkapp_tcp_server_t *srv,
+mnapp_tcp_server_init(mnapp_tcp_server_t *srv,
                        int listen_backlog,
                        const char *addr,
-                       mrkapp_tcp_server_cb_t cb,
+                       mnapp_tcp_server_cb_t cb,
                        void *udata)
 {
     char *c;
@@ -149,11 +149,11 @@ mrkapp_tcp_server_init(mrkapp_tcp_server_t *srv,
 
 
 void
-mrkapp_tcp_server_fini(mrkapp_tcp_server_t *srv)
+mnapp_tcp_server_fini(mnapp_tcp_server_t *srv)
 {
     srv->shutting_down = true;
     if (srv->thread != NULL) {
-        mrkthr_set_interrupt_and_join(srv->thread);
+        mnthr_set_interrupt_and_join(srv->thread);
         srv->thread = NULL;
     }
     if (srv->hostname != NULL) {
@@ -169,26 +169,26 @@ mrkapp_tcp_server_fini(mrkapp_tcp_server_t *srv)
 
 
 static int
-mrkapp_tcp_server_worker(UNUSED int argc, void **argv)
+mnapp_tcp_server_worker(UNUSED int argc, void **argv)
 {
     int res;
-    mrkapp_tcp_server_t *srv;
+    mnapp_tcp_server_t *srv;
 
     assert(argc == 1);
     srv = argv[0];
 
     res = 0;
     while (!srv->shutting_down) {
-        mrkthr_socket_t *sockets;
+        mnthr_socket_t *sockets;
         off_t sz, i;
 
         sockets = NULL;
         sz = 0;
-        if ((res = mrkthr_accept_all2(srv->fd, &sockets, &sz)) != 0) {
+        if ((res = mnthr_accept_all2(srv->fd, &sockets, &sz)) != 0) {
             break;
         }
         for (i = 0; i < sz; ++i) {
-            mrkthr_socket_t *psock;
+            mnthr_socket_t *psock;
 
             psock = sockets + i;
 
@@ -203,18 +203,18 @@ mrkapp_tcp_server_worker(UNUSED int argc, void **argv)
         }
     }
 
-    MRKTHRET(res);
+    MNTHRET(res);
 }
 
 
 int
-mrkapp_tcp_server_start(mrkapp_tcp_server_t *srv)
+mnapp_tcp_server_start(mnapp_tcp_server_t *srv)
 {
     if (srv->family == PF_INET) {
-        if ((srv->fd = mrkthr_socket_bind(srv->hostname,
+        if ((srv->fd = mnthr_socket_bind(srv->hostname,
                                           srv->servname,
                                           srv->family)) < 0) {
-            TRRET(MRKAPP_TCP_SERVER_START + 1);
+            TRRET(MNAPP_TCP_SERVER_START + 1);
         }
 
     } else {
@@ -243,21 +243,21 @@ mrkapp_tcp_server_start(mrkapp_tcp_server_t *srv)
 #endif
 
         if ((srv->fd = socket(srv->family, srv->socktype, 0)) < 0) {
-            TRRET(MRKAPP_TCP_SERVER_START + 2);
+            TRRET(MNAPP_TCP_SERVER_START + 2);
         }
 
         if (fcntl(srv->fd, F_SETFL, O_NONBLOCK) == -1) {
             perror("fcntl");
             close(srv->fd);
             srv->fd = -1;
-            TRRET(MRKAPP_TCP_SERVER_START + 3);
+            TRRET(MNAPP_TCP_SERVER_START + 3);
         }
 
         if (bind(srv->fd, (struct sockaddr *)&sa, SUN_LEN(&sa)) != 0) {
             perror("bind");
             close(srv->fd);
             srv->fd = -1;
-            TRRET(MRKAPP_TCP_SERVER_START + 4);
+            TRRET(MNAPP_TCP_SERVER_START + 4);
         }
     }
 
@@ -266,11 +266,11 @@ mrkapp_tcp_server_start(mrkapp_tcp_server_t *srv)
         perror("listen");
         close(srv->fd);
         srv->fd = -1;
-        TRRET(MRKAPP_TCP_SERVER_START + 5);
+        TRRET(MNAPP_TCP_SERVER_START + 5);
     }
 
-    srv->thread = MRKTHR_SPAWN(srv->hostname,
-                               mrkapp_tcp_server_worker,
+    srv->thread = MNTHR_SPAWN(srv->hostname,
+                               mnapp_tcp_server_worker,
                                srv);
 
     return 0;
@@ -278,18 +278,18 @@ mrkapp_tcp_server_start(mrkapp_tcp_server_t *srv)
 
 
 int
-mrkapp_tcp_server_serve(mrkapp_tcp_server_t *srv)
+mnapp_tcp_server_serve(mnapp_tcp_server_t *srv)
 {
     assert(srv->thread != NULL);
-    return mrkthr_join(srv->thread);
+    return mnthr_join(srv->thread);
 }
 
 void
-mrkapp_tcp_server_stop(mrkapp_tcp_server_t *srv)
+mnapp_tcp_server_stop(mnapp_tcp_server_t *srv)
 {
     srv->shutting_down = true;
     if (srv->thread != NULL) {
-        mrkthr_set_interrupt_and_join(srv->thread);
+        mnthr_set_interrupt_and_join(srv->thread);
         srv->thread  = NULL;
     }
 }

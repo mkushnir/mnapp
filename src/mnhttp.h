@@ -1,57 +1,57 @@
-#ifndef MRKHTTP_H
-#define MRKHTTP_H
+#ifndef MNHTTP_H
+#define MNHTTP_H
 
 #include <stdarg.h>
 #include <stdbool.h>
 #include <time.h>
-#include "mrkcommon/bytes.h"
-#include "mrkcommon/hash.h"
-#include "mrkcommon/bytestream.h"
+#include "mncommon/bytes.h"
+#include "mncommon/hash.h"
+#include "mncommon/bytestream.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* bytestream_consume */
-#define MRKHTTP_PARSE_EOF (-1)
-#define MRKHTTP_PARSE_NEED_MORE (-2)
+#define MNHTTP_PARSE_EOF (-1)
+#define MNHTTP_PARSE_NEED_MORE (-2)
 /* end of data */
-#define MRKHTTP_PARSE_EOD (-3)
-#define MRKHTTP_PARSE_EMPTY (-4)
-#define MRKHTTP_PARSE_CONSUME_DATA_ERROR (-5)
+#define MNHTTP_PARSE_EOD (-3)
+#define MNHTTP_PARSE_EMPTY (-4)
+#define MNHTTP_PARSE_CONSUME_DATA_ERROR (-5)
 
-#define MRKHTTP_MOPTIONS    (1)
-#define MRKHTTP_METHOD_OPTIONS  "OPTIONS"
-#define MRKHTTP_MGET        (2)
-#define MRKHTTP_METHOD_GET      "GET"
-#define MRKHTTP_MHEAD       (3)
-#define MRKHTTP_METHOD_HEAD     "HEAD"
-#define MRKHTTP_MPOST       (4)
-#define MRKHTTP_METHOD_POST     "POST"
-#define MRKHTTP_MPUT        (5)
-#define MRKHTTP_METHOD_PUT      "PUT"
-#define MRKHTTP_MDELETE     (6)
-#define MRKHTTP_METHOD_DELETE   "DELETE"
-#define MRKHTTP_MTRACE      (7)
-#define MRKHTTP_METHOD_TRACE    "TRACE"
-#define MRKHTTP_MCONNECT    (8)
-#define MRKHTTP_METHOD_CONNECT  "CONNECT"
+#define MNHTTP_MOPTIONS    (1)
+#define MNHTTP_METHOD_OPTIONS  "OPTIONS"
+#define MNHTTP_MGET        (2)
+#define MNHTTP_METHOD_GET      "GET"
+#define MNHTTP_MHEAD       (3)
+#define MNHTTP_METHOD_HEAD     "HEAD"
+#define MNHTTP_MPOST       (4)
+#define MNHTTP_METHOD_POST     "POST"
+#define MNHTTP_MPUT        (5)
+#define MNHTTP_METHOD_PUT      "PUT"
+#define MNHTTP_MDELETE     (6)
+#define MNHTTP_METHOD_DELETE   "DELETE"
+#define MNHTTP_MTRACE      (7)
+#define MNHTTP_METHOD_TRACE    "TRACE"
+#define MNHTTP_MCONNECT    (8)
+#define MNHTTP_METHOD_CONNECT  "CONNECT"
 /* MS Graph API*/
-#define MRKHTTP_MPATCH      (9)
-#define MRKHTTP_METHOD_PATCH    "PATCH"
+#define MNHTTP_MPATCH      (9)
+#define MNHTTP_METHOD_PATCH    "PATCH"
 
-#define MRKHTTP_MEXT        (10)
+#define MNHTTP_MEXT        (10)
 
-#define MRKHTTP_MSTR(m)                                \
-((m) == MRKHTTP_MOPTIONS ? MRKHTTP_METHOD_OPTIONS:     \
- (m) == MRKHTTP_MGET ? MRKHTTP_METHOD_GET:             \
- (m) == MRKHTTP_MHEAD ? MRKHTTP_METHOD_HEAD:           \
- (m) == MRKHTTP_MPOST ? MRKHTTP_METHOD_POST:           \
- (m) == MRKHTTP_MPUT ? MRKHTTP_METHOD_PUT:             \
- (m) == MRKHTTP_MDELETE ? MRKHTTP_METHOD_DELETE:       \
- (m) == MRKHTTP_MTRACE ? MRKHTTP_METHOD_TRACE:         \
- (m) == MRKHTTP_MCONNECT ? MRKHTTP_METHOD_CONNECT:     \
- (m) == MRKHTTP_MPATCH ? MRKHTTP_METHOD_PATCH:         \
+#define MNHTTP_MSTR(m)                                \
+((m) == MNHTTP_MOPTIONS ? MNHTTP_METHOD_OPTIONS:     \
+ (m) == MNHTTP_MGET ? MNHTTP_METHOD_GET:             \
+ (m) == MNHTTP_MHEAD ? MNHTTP_METHOD_HEAD:           \
+ (m) == MNHTTP_MPOST ? MNHTTP_METHOD_POST:           \
+ (m) == MNHTTP_MPUT ? MNHTTP_METHOD_PUT:             \
+ (m) == MNHTTP_MDELETE ? MNHTTP_METHOD_DELETE:       \
+ (m) == MNHTTP_MTRACE ? MNHTTP_METHOD_TRACE:         \
+ (m) == MNHTTP_MCONNECT ? MNHTTP_METHOD_CONNECT:     \
+ (m) == MNHTTP_MPATCH ? MNHTTP_METHOD_PATCH:         \
  "<ext>")                                              \
 
 
@@ -136,8 +136,8 @@ void mnhttp_uri_init(mnhttp_uri_t *);
 void mnhttp_uri_fini(mnhttp_uri_t *);
 void mnhttp_uri_add_qterm(mnhttp_uri_t *, mnbytes_t *, mnbytes_t *);
 int mnhttp_uri_start_request(mnhttp_uri_t *, mnbytestream_t *, const char *);
-int mrkhttp_parse_qterms(mnbytes_t *, char, char, mnhash_t *);
-int mrkhttp_parse_kvpbd(mnbytes_t *, char, char, mnhash_t *);
+int mnhttp_parse_qterms(mnbytes_t *, char, char, mnhash_t *);
+int mnhttp_parse_kvpbd(mnbytes_t *, char, char, mnhash_t *);
 mnhttp_ctx_t *http_ctx_new(void);
 void http_ctx_destroy(mnhttp_ctx_t **);
 
@@ -158,45 +158,45 @@ int http_field_addb(mnbytestream_t *, const mnbytes_t *, const mnbytes_t *);
 int http_field_addt(mnbytestream_t *, const mnbytes_t *, time_t);
 
 
-#define MRKHTTP_PRINTF_HEADER(out, name, fmt, ...)                             \
+#define MNHTTP_PRINTF_HEADER(out, name, fmt, ...)                             \
     (void)bytestream_nprintf(out, 4096, name ": " fmt "\r\n", __VA_ARGS__)     \
 
 
-#define MRKHTTP_PRINTF_HEADER_INT(out, name, val)                              \
+#define MNHTTP_PRINTF_HEADER_INT(out, name, val)                              \
     (void)bytestream_nprintf(out, 4096, name ": %ld\r\n", (intmax_t)(val))     \
 
 
-#define MRKHTTP_PRINTF_HEADER_BOOL(out, name, val)                             \
+#define MNHTTP_PRINTF_HEADER_BOOL(out, name, val)                             \
     (void)bytestream_nprintf(out, 4096, name ": %s\r\n", (val) ? "yes" : "no") \
 
 
-#define MRKHTTP_PRINTF_HEADER_FLOAT(out, name, val)                            \
+#define MNHTTP_PRINTF_HEADER_FLOAT(out, name, val)                            \
     (void)bytestream_nprintf(out, 4096, name ": %lf\r\n", (double)(val))       \
 
 
-#define MRKHTTP_PRINTF_HEADER_BYTES(out, name, val)    \
+#define MNHTTP_PRINTF_HEADER_BYTES(out, name, val)    \
     (void)bytestream_nprintf(out,                      \
                              4096 + BSZ(val),          \
                              name ": %s\r\n",          \
                              BCDATA(val))              \
 
 
-#define MRKHTTP_PRINTF_HEADER_RFC1123(out, name, val)          \
+#define MNHTTP_PRINTF_HEADER_RFC1123(out, name, val)          \
 do {                                                           \
-    char __mrkhttp_printf_header_rfc1123_buf[256];             \
-    size_t __mrkhttp_printf_header_rfc1123_sz;                 \
-    struct tm *__mrkhttp_printf_header_rfc1123_t;              \
-    __mrkhttp_printf_header_rfc1123_t = gmtime(val);           \
-    __mrkhttp_printf_header_rfc1123_sz = strftime(             \
-            __mrkhttp_printf_header_rfc1123_buf,               \
-            sizeof(__mrkhttp_printf_header_rfc1123_buf),       \
+    char __mnhttp_printf_header_rfc1123_buf[256];             \
+    size_t __mnhttp_printf_header_rfc1123_sz;                 \
+    struct tm *__mnhttp_printf_header_rfc1123_t;              \
+    __mnhttp_printf_header_rfc1123_t = gmtime(val);           \
+    __mnhttp_printf_header_rfc1123_sz = strftime(             \
+            __mnhttp_printf_header_rfc1123_buf,               \
+            sizeof(__mnhttp_printf_header_rfc1123_buf),       \
             "%a, %d %b %Y %H:%M:%S GMT",                       \
-            __mrkhttp_printf_header_rfc1123_t);                \
+            __mnhttp_printf_header_rfc1123_t);                \
     (void)bytestream_nprintf(                                  \
             out,                                               \
-            4096 + __mrkhttp_printf_header_rfc1123_sz,         \
+            4096 + __mnhttp_printf_header_rfc1123_sz,         \
             name ": %s\r\n",                                   \
-            __mrkhttp_printf_header_rfc1123_buf);              \
+            __mnhttp_printf_header_rfc1123_buf);              \
 } while (0)                                                    \
 
 

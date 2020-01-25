@@ -5,11 +5,11 @@
 
 
 //#define TRRET_DEBUG
-#include <mrkcommon/dumpm.h>
+#include <mncommon/dumpm.h>
 
-#include <mrkcommon/util.h>
+#include <mncommon/util.h>
 
-#include <mrkthr.h>
+#include <mnthr.h>
 
 #include "bytestream_ssl_helper.h"
 
@@ -51,14 +51,14 @@ bytestream_ssl_recv_more(mnbytestream_t *stream,
             fd = SSL_get_fd(ssl);
             switch (res) {
             case SSL_ERROR_WANT_READ:
-                if (mrkthr_wait_for_read(fd) != 0) {
+                if (mnthr_wait_for_read(fd) != 0) {
                     nrecv = -1;
                     goto end;
                 }
                 break;
 
             case SSL_ERROR_WANT_WRITE:
-                if (mrkthr_wait_for_write(fd) != 0) {
+                if (mnthr_wait_for_write(fd) != 0) {
                     nrecv = -1;
                     goto end;
                 }
@@ -106,14 +106,14 @@ bytestream_ssl_send(mnbytestream_t *stream,
             fd = SSL_get_fd(ssl);
             switch (res) {
             case SSL_ERROR_WANT_READ:
-                if (mrkthr_wait_for_read(fd) != 0) {
+                if (mnthr_wait_for_read(fd) != 0) {
                     nwritten = -1;
                     goto end;
                 }
                 break;
 
             case SSL_ERROR_WANT_WRITE:
-                if (mrkthr_wait_for_write(fd) != 0) {
+                if (mnthr_wait_for_write(fd) != 0) {
                     nwritten = -1;
                     goto end;
                 }

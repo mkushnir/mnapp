@@ -4,13 +4,13 @@ EXTRA_DIST = $(diags)
 CLEANFILES = $(BUILT_SOURCES) *.core
 #CLEANFILES += *.in
 
-lib_LTLIBRARIES = libmrkapp.la
+lib_LTLIBRARIES = libmnapp.la
 
-nobase_include_HEADERS = mrkapp.h mnhttp.h mnhttpc.h mncommand.h
+nobase_include_HEADERS = mnapp.h mnhttp.h mnhttpc.h mncommand.h
 
-noinst_HEADERS = mrkapp_private.h bytestream_ssl_helper.h
+noinst_HEADERS = mnapp_private.h bytestream_ssl_helper.h
 
-libmrkapp_la_SOURCES = mrkapp.c \
+libmnapp_la_SOURCES = mnapp.c \
 		       bytestream_ssl_helper.c \
 		       mnhttp.c \
 		       mnhttpc.c \
@@ -18,7 +18,7 @@ libmrkapp_la_SOURCES = mrkapp.c \
 		       local_server.c \
 		       daemonize.c
 
-nodist_libmrkapp_la_SOURCES = diag.c
+nodist_libmnapp_la_SOURCES = diag.c
 
 DEBUG_LD_FLAGS =
 if DEBUG
@@ -33,18 +33,18 @@ endif
 endif
 
 if ALLSTATIC
-libmrkapp_la_LDFLAGS = -all-static
+libmnapp_la_LDFLAGS = -all-static
 else
-libmrkapp_la_LDFLAGS =
+libmnapp_la_LDFLAGS =
 endif
 
-libmrkapp_la_CFLAGS = $(DEBUG_CC_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ @_XOPEN_SOURCE_MACRO@ -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
+libmnapp_la_CFLAGS = $(DEBUG_CC_FLAGS) -Wall -Wextra -Werror -std=c99 @_GNU_SOURCE_MACRO@ @_XOPEN_SOURCE_MACRO@ -I$(top_srcdir)/src -I$(top_srcdir) -I$(includedir)
 
-libmrkapp_la_LDFLAGS += $(DEBUG_LD_FLAGS) -version-info 0:0:0 -L$(libdir)
-libmrkapp_la_LIBADD = -lmrkthr -lmrkcommon -lmndiag -lcrypto -lssl
+libmnapp_la_LDFLAGS += $(DEBUG_LD_FLAGS) -version-info 0:0:0 -L$(libdir)
+libmnapp_la_LIBADD = -lmnthr -lmncommon -lmndiag -lcrypto -lssl
 
 diag.c diag.h: $(diags)
-	$(AM_V_GEN) cat $(diags) | sort -u >diag.txt.tmp && mndiagen -v -S diag.txt.tmp -L mrkapp -H diag.h -C diag.c *.[ch]
+	$(AM_V_GEN) cat $(diags) | sort -u >diag.txt.tmp && mndiagen -v -S diag.txt.tmp -L mnapp -H diag.h -C diag.c *.[ch]
 
 run: all
 	for i in $(bin_PROGRAMS); do if test -x ./$$i; then LD_LIBRARY_PATH=$(libdir) ./$$i; fi; done;

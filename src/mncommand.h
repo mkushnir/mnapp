@@ -5,9 +5,9 @@
 #include <stdint.h>
 #include <getopt.h>
 
-#include <mrkcommon/bytes.h>
-#include <mrkcommon/bytestream.h>
-#include <mrkcommon/array.h>
+#include <mncommon/bytes.h>
+#include <mncommon/bytestream.h>
+#include <mncommon/array.h>
 
 
 struct _mncommand_ctx;

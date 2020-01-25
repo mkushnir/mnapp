@@ -1,4 +1,4 @@
-AC_INIT(mrkapp, 0.1, markiyan.kushnir@gmail.com)
+AC_INIT(mnapp, 0.1, markiyan.kushnir@gmail.com)
 
 AS_IF([test -n "$USE_GCC"],
 [
@@ -135,7 +135,7 @@ AC_ARG_ENABLE(lto,
 AM_CONDITIONAL([LTO], [test "$enable_lto" = "yes"])
 
 # pass LDFLAGS=-L${LOCALBASE}/lib in the environment
-dnl AC_CHECK_LIB(mrkcommon, mndiag_mrkcommon_str, [], [AC_MSG_FAILURE(libmrkcommon.so is required. Please find it at git@github.com:mkushnir/mrkcommon.git)]) 
-dnl AC_CHECK_LIB(mrkthr, mndiag_mrkthr_str, [], [AC_MSG_FAILURE(libmrkthr.so is required. Please find it at git@github.com:mkushnir/mrkthr.git)]) 
+dnl AC_CHECK_LIB(mncommon, mndiag_mncommon_str, [], [AC_MSG_FAILURE(libmncommon.so is required. Please find it at git@github.com:mkushnir/mncommon.git)]) 
+dnl AC_CHECK_LIB(mnthr, mndiag_mnthr_str, [], [AC_MSG_FAILURE(libmnthr.so is required. Please find it at git@github.com:mkushnir/mnthr.git)]) 
 
 AC_OUTPUT

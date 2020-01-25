@@ -8,11 +8,11 @@
 #include <inttypes.h>
 #include <strings.h>
 
-#include <mrkcommon/array.h>
-#include <mrkcommon/bytes.h>
-#include <mrkcommon/bytestream.h>
-#include <mrkcommon/dumpm.h>
-#include <mrkcommon/util.h>
+#include <mncommon/array.h>
+#include <mncommon/bytes.h>
+#include <mncommon/bytestream.h>
+#include <mncommon/dumpm.h>
+#include <mncommon/util.h>
 
 #include <mncommand.h>
 
@@ -63,7 +63,7 @@ mncommand_ctx_format_help(mncommand_ctx_t *ctx, mnbytestream_t *bs)
          cmd = array_next(&ctx->commands, &it)) {
         ssize_t nwritten;
 
-        if (MRKLIKELY(
+        if (MNLIKELY(
                 (nwritten = bytestream_nprintf(
                     bs,
                     1024,
@@ -191,7 +191,7 @@ mncommand_ctx_getopt(mncommand_ctx_t *ctx,
     /* terminating null */
     bytestream_cat(&bs, 1, "");
 
-    if (MRKUNLIKELY((options = array_incr(&ctx->options)) == NULL)) {
+    if (MNUNLIKELY((options = array_incr(&ctx->options)) == NULL)) {
         FFAIL("array_incr");
     }
     *options = (struct option){0};
@@ -373,7 +373,7 @@ mncommand_ctx_add_cmd(mncommand_ctx_t *ctx,
     mncommand_cmd_t *cmd;
     struct option *opt;
 
-    if (MRKUNLIKELY((cmd = array_incr(&ctx->commands)) == NULL)) {
+    if (MNUNLIKELY((cmd = array_incr(&ctx->commands)) == NULL)) {
         TRRET(MNCOMMAND_CTX_ADD_CMD + 1);
     }
 
@@ -396,7 +396,7 @@ mncommand_ctx_add_cmd(mncommand_ctx_t *ctx,
     cmd->opt.val = shortname;
     mncommand_cmd_compute_helpspec(cmd);
 
-    if (MRKUNLIKELY((opt = array_incr(&ctx->options)) == NULL)) {
+    if (MNUNLIKELY((opt = array_incr(&ctx->options)) == NULL)) {
         TRRET(MNCOMMAND_CTX_ADD_CMD + 2);
     }
 

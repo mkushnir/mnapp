@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "unittest.h"
-#include <mrkcommon/dumpm.h>
-#include <mrkcommon/util.h>
-#include <mrkapp.h>
+#include <mncommon/unittest.h>
+#include <mncommon/dumpm.h>
+#include <mncommon/util.h>
+#include <mnapp.h>
 
 #ifndef NDEBUG
 const char *_malloc_options = "AJ";

@@ -2,11 +2,11 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "unittest.h"
+#include <mncommon/unittest.h>
 #define TRRET_DEBUG
-#include <mrkcommon/dumpm.h>
-#include <mrkcommon/util.h>
-#include <mrkapp.h>
+#include <mncommon/dumpm.h>
+#include <mncommon/util.h>
+#include <mnapp.h>
 #include <mnhttp.h>
 
 #include "diag.h"

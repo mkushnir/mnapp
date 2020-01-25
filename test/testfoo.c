@@ -2,12 +2,12 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "unittest.h"
+#include <mncommon/unittest.h>
 #define TRRET_DEBUG
-#include <mrkcommon/dumpm.h>
-#include <mrkcommon/util.h>
+#include <mncommon/dumpm.h>
+#include <mncommon/util.h>
 
-#include <mrkapp.h>
+#include <mnapp.h>
 
 #include "diag.h"
 
@@ -37,7 +37,7 @@ test0(void)
 static int
 _mycb(UNUSED int argc, void **argv)
 {
-    mrkapp_tcp_server_t *srv;
+    mnapp_tcp_server_t *srv;
     int fd;
     UNUSED void *udata;
 
@@ -52,7 +52,7 @@ _mycb(UNUSED int argc, void **argv)
     if (srv->shutting_down) {
         return 1;
     }
-    while ((nread = mrkthr_read_allb(fd, buf, sizeof(buf))) > 0) {
+    while ((nread = mnthr_read_allb(fd, buf, sizeof(buf))) > 0) {
         D8(buf, nread);
         if (*buf == 'q') {
             CTRACE("quit ...");
@@ -65,9 +65,9 @@ _mycb(UNUSED int argc, void **argv)
 
 
 static int
-mycb(mrkapp_tcp_server_t *srv, mrkthr_socket_t *sock, UNUSED void *udata)
+mycb(mnapp_tcp_server_t *srv, mnthr_socket_t *sock, UNUSED void *udata)
 {
-    (void)MRKTHR_SPAWN(NULL, _mycb, srv, sock->fd, udata);
+    (void)MNTHR_SPAWN(NULL, _mycb, srv, sock->fd, udata);
     return 0;
 }
 
@@ -77,18 +77,18 @@ test1(UNUSED int argc, void **argv)
 {
     const char *addr;
     int res;
-    mrkapp_tcp_server_t srv;
+    mnapp_tcp_server_t srv;
 
     assert(argc == 1);
     addr = argv[0];
 
-    mrkapp_tcp_server_init(&srv, 1, addr, mycb, NULL);
-    if ((res = mrkapp_tcp_server_start(&srv)) != 0) {
+    mnapp_tcp_server_init(&srv, 1, addr, mycb, NULL);
+    if ((res = mnapp_tcp_server_start(&srv)) != 0) {
         TR(res);
     }
-    (void)mrkapp_tcp_server_serve(&srv);
-    mrkapp_tcp_server_stop(&srv);
-    mrkapp_tcp_server_fini(&srv);
+    (void)mnapp_tcp_server_serve(&srv);
+    mnapp_tcp_server_stop(&srv);
+    mnapp_tcp_server_fini(&srv);
     return 0;
 }
 
@@ -97,7 +97,7 @@ static int
 test2(UNUSED int argc, UNUSED void **argv)
 {
     while (true) {
-        mrkthr_sleep(1000);
+        mnthr_sleep(1000);
         CTRACE();
     }
 
@@ -111,10 +111,10 @@ main(int argc, char **argv)
     if (argc != 2) {
         FAIL("main");
     }
-    mrkthr_init();
-    (void)MRKTHR_SPAWN("test1", test1, argv[1]);
-    (void)MRKTHR_SPAWN("test2", test2);
-    mrkthr_loop();
-    mrkthr_fini();
+    mnthr_init();
+    (void)MNTHR_SPAWN("test1", test1, argv[1]);
+    (void)MNTHR_SPAWN("test2", test2);
+    mnthr_loop();
+    mnthr_fini();
     return 0;
 }

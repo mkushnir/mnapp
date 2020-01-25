@@ -6,13 +6,13 @@
 
 #include <openssl/ssl.h>
 
-#include <mrkcommon/bytes.h>
-#include <mrkcommon/bytestream.h>
-#include <mrkcommon/hash.h>
-#include <mrkcommon/stqueue.h>
+#include <mncommon/bytes.h>
+#include <mncommon/bytestream.h>
+#include <mncommon/hash.h>
+#include <mncommon/stqueue.h>
 
 #include <mnhttp.h>
-#include <mrkthr.h>
+#include <mnthr.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,7 +22,7 @@ extern "C" {
 typedef union _mnhttpc_message {
     /* request */
     struct {
-        /* MRKHTTP_METHOD_ */
+        /* MNHTTP_METHOD_ */
         const char *method; /* weak */
         mnhttp_uri_t uri;
         mnhash_t headers;
@@ -54,7 +54,7 @@ typedef int (*mnhttpc_response_body_cb_t)(mnhttp_ctx_t *, mnbytestream_t *, stru
 typedef struct _mnhttpc_request {
     STQUEUE_ENTRY(_mnhttpc_request, link);
     struct _mnhttpc_connection *connection;
-    mrkthr_signal_t recv_signal;
+    mnthr_signal_t recv_signal;
     mnhttpc_request_body_cb_t out_body_cb;
     void *out_body_cb_udata;
     mnhttpc_response_body_cb_t in_body_cb;
@@ -74,11 +74,11 @@ typedef struct _mnhttpc_connection {
     SSL_CTX *sslctx;
     SSL *ssl;
 
-    mrkthr_ctx_t *send_thread;
-    mrkthr_sema_t reqfin_sema;
-    mrkthr_signal_t send_signal;
-    mrkthr_ctx_t *recv_thread;
-    mrkthr_cond_t recv_cond;
+    mnthr_ctx_t *send_thread;
+    mnthr_sema_t reqfin_sema;
+    mnthr_signal_t send_signal;
+    mnthr_ctx_t *recv_thread;
+    mnthr_cond_t recv_cond;
     mnbytestream_t in;
     mnbytestream_t out;
     STQUEUE(_mnhttpc_request, requests);
@@ -109,7 +109,7 @@ mnhttpc_request_t *mnhttpc_new(mnhttpc_t *,
                 proxy_host,                                            \
                 proxy_port,                                            \
                 uri,                                                   \
-                MRKHTTP_METHOD_GET,                                    \
+                MNHTTP_METHOD_GET,                                    \
                 NULL,                                                  \
                 NULL,                                                  \
                 in_body_cb)                                            \
@@ -126,7 +126,7 @@ mnhttpc_request_t *mnhttpc_new(mnhttpc_t *,
                 proxy_host,                    \
                 proxy_port,                    \
                 uri,                           \
-                MRKHTTP_METHOD_POST,           \
+                MNHTTP_METHOD_POST,           \
                 out_body_cb,                   \
                 out_body_cb_udata,             \
                 in_body_cb)                    \
@@ -151,8 +151,8 @@ int mnhttpc_request_finalize(mnhttpc_request_t *);
 int mnhttpc_get_response(mnhttpc_request_t *);
 
 void mnhttpc_init(mnhttpc_t *);
-void mnhttpc_fini(mnhttpc_t *); /* MRKTHR_CPOINT */
-void mnhttpc_destroy(mnhttpc_t **); /* MRKTHR_CPOINT */
+void mnhttpc_fini(mnhttpc_t *); /* MNTHR_CPOINT */
+void mnhttpc_destroy(mnhttpc_t **); /* MNTHR_CPOINT */
 void mnhttpc_gc(mnhttpc_t *);
 
 

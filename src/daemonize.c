@@ -9,8 +9,8 @@
 #include <sys/resource.h>
 #include <unistd.h>
 
-#include <mrkcommon/util.h>
-#include <mrkcommon/dumpm.h>
+#include <mncommon/util.h>
+#include <mncommon/dumpm.h>
 #include "diag.h"
 
 static void

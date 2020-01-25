@@ -5,11 +5,11 @@
 #include <string.h>
 
 //#define TRRET_DEBUG
-#include <mrkcommon/dumpm.h>
-#include <mrkcommon/bytes.h>
-#include <mrkcommon/hash.h>
-#include <mrkcommon/bytestream.h>
-#include <mrkcommon/util.h>
+#include <mncommon/dumpm.h>
+#include <mncommon/bytes.h>
+#include <mncommon/hash.h>
+#include <mncommon/bytestream.h>
+#include <mncommon/util.h>
 
 #include "diag.h"
 
@@ -171,7 +171,7 @@ mnhttp_uri_add_qterm(mnhttp_uri_t *uri, mnbytes_t *key, mnbytes_t *value)
 }
 
 
-#define MRKHTTP_PARSE_QTERMS_FIND_PAIR(keydecode, valdecode)           \
+#define MNHTTP_PARSE_QTERMS_FIND_PAIR(keydecode, valdecode)           \
     for (j = i0; j < i1; ++j) {                                        \
         char cc;                                                       \
         cc = ss[j];                                                    \
@@ -207,7 +207,7 @@ mnhttp_uri_add_qterm(mnhttp_uri_t *uri, mnbytes_t *key, mnbytes_t *value)
     }                                                                  \
 
 
-#define MRKHTTP_PARSE_KVP_BODY(keydecode, valdecode)                   \
+#define MNHTTP_PARSE_KVP_BODY(keydecode, valdecode)                   \
     int res;                                                           \
     char *ss = BCDATA(s);                                              \
     size_t i0, i1, j;                                                  \
@@ -218,34 +218,34 @@ mnhttp_uri_add_qterm(mnhttp_uri_t *uri, mnbytes_t *key, mnbytes_t *value)
         char c;                                                        \
         c = ss[i1];                                                    \
         if (c == rdelim) {                                             \
-            MRKHTTP_PARSE_QTERMS_FIND_PAIR(keydecode, valdecode);      \
+            MNHTTP_PARSE_QTERMS_FIND_PAIR(keydecode, valdecode);      \
             i0 = i1 + 1;                                               \
         }                                                              \
     }                                                                  \
     --i1;                                                              \
-    MRKHTTP_PARSE_QTERMS_FIND_PAIR(keydecode, valdecode);              \
+    MNHTTP_PARSE_QTERMS_FIND_PAIR(keydecode, valdecode);              \
     return res                                                         \
 
 
 
 int
-mrkhttp_parse_qterms(mnbytes_t *s,
+mnhttp_parse_qterms(mnbytes_t *s,
                     char fdelim,
                     char rdelim,
                     mnhash_t *hash)
 {
-    MRKHTTP_PARSE_KVP_BODY(bytes_urldecode, bytes_urldecode);
+    MNHTTP_PARSE_KVP_BODY(bytes_urldecode, bytes_urldecode);
 }
 
 
 
 int
-mrkhttp_parse_kvpbd(mnbytes_t *s,
+mnhttp_parse_kvpbd(mnbytes_t *s,
                     char fdelim,
                     char rdelim,
                     mnhash_t *hash)
 {
-    MRKHTTP_PARSE_KVP_BODY(bytes_brushdown, bytes_brushdown);
+    MNHTTP_PARSE_KVP_BODY(bytes_brushdown, bytes_brushdown);
 }
 
 
@@ -823,7 +823,7 @@ process_header(mnhttp_ctx_t *ctx, mnbytestream_t *in)
         }
     }
 
-    return MRKHTTP_PARSE_NEED_MORE;
+    return MNHTTP_PARSE_NEED_MORE;
 }
 
 
@@ -870,7 +870,7 @@ process_body(mnhttp_ctx_t *ctx,
                 //   MIN(128, SEOD(in) - ctx->current_chunk.start));
 
                 SADVANCEPOS(in, SEOD(in) - SPOS(in));
-                TRRET(MRKHTTP_PARSE_NEED_MORE);
+                TRRET(MNHTTP_PARSE_NEED_MORE);
             }
             ctx->current_chunk_size = strtol(SDATA(in,
                         ctx->current_chunk.start), &tmp, 16);
@@ -890,7 +890,7 @@ process_body(mnhttp_ctx_t *ctx,
             ctx->current_chunk.end = ctx->current_chunk.start;
             ctx->chunk_parser_state = PS_CHUNK_DATA;
 
-            TRRET(MRKHTTP_PARSE_NEED_MORE);
+            TRRET(MNHTTP_PARSE_NEED_MORE);
 
         } else if (ctx->chunk_parser_state == PS_CHUNK_DATA) {
             int needed, navail;
@@ -910,7 +910,7 @@ process_body(mnhttp_ctx_t *ctx,
                 ctx->current_chunk.end += incr;
                 SADVANCEPOS(in, incr);
 
-                TRRET(MRKHTTP_PARSE_NEED_MORE);
+                TRRET(MNHTTP_PARSE_NEED_MORE);
 
             } else {
                 //TRACE("chunk complete: sz=%d/%ld",
@@ -937,7 +937,7 @@ process_body(mnhttp_ctx_t *ctx,
                 if (ctx->current_chunk_size > 0) {
                     /* recycle */
                     recycle_stream_buffer(ctx, in);
-                    TRRET(MRKHTTP_PARSE_NEED_MORE);
+                    TRRET(MNHTTP_PARSE_NEED_MORE);
                 } else {
                     /* recycle */
                     recycle_stream_buffer(ctx, in);
@@ -971,7 +971,7 @@ process_body(mnhttp_ctx_t *ctx,
         //D16(SPDATA(in), navail);
 
         if (accumulated < ctx->bodysz) {
-            TRRET(MRKHTTP_PARSE_NEED_MORE);
+            TRRET(MNHTTP_PARSE_NEED_MORE);
         } else {
             if (body_cb != NULL) {
                 if (body_cb(ctx, in, udata) != 0) {
@@ -991,33 +991,33 @@ static int
 parse_method(char *s, size_t sz)
 {
     if (strncasecmp(s, "GET", sz) == 0) {
-        return MRKHTTP_MGET;
+        return MNHTTP_MGET;
     }
     if (strncasecmp(s, "HEAD", sz) == 0) {
-        return MRKHTTP_MHEAD;
+        return MNHTTP_MHEAD;
     }
     if (strncasecmp(s, "POST", sz) == 0) {
-        return MRKHTTP_MPOST;
+        return MNHTTP_MPOST;
     }
     if (strncasecmp(s, "PUT", sz) == 0) {
-        return MRKHTTP_MPUT;
+        return MNHTTP_MPUT;
     }
     if (strncasecmp(s, "DELETE", sz) == 0) {
-        return MRKHTTP_MDELETE;
+        return MNHTTP_MDELETE;
     }
     if (strncasecmp(s, "OPTIONS", sz) == 0) {
-        return MRKHTTP_MOPTIONS;
+        return MNHTTP_MOPTIONS;
     }
     if (strncasecmp(s, "CONNECT", sz) == 0) {
-        return MRKHTTP_MCONNECT;
+        return MNHTTP_MCONNECT;
     }
     if (strncasecmp(s, "TRACE", sz) == 0) {
-        return MRKHTTP_MTRACE;
+        return MNHTTP_MTRACE;
     }
     if (sz == 0) {
         return -1;
     }
-    return MRKHTTP_MEXT;
+    return MNHTTP_MEXT;
 }
 
 
@@ -1030,9 +1030,9 @@ parse_request_line(mnhttp_ctx_t *ctx, mnbytestream_t *in, UNUSED void *udata)
     if ((end = findcrlf(SDATA(in, ctx->first_line.start),
                         SEOD(in) - ctx->first_line.start)) == NULL) {
 
-        /* MRKHTTP_PARSE_NEED_MORE */
+        /* MNHTTP_PARSE_NEED_MORE */
         SADVANCEPOS(in, SEOD(in) - SPOS(in));
-        return MRKHTTP_PARSE_NEED_MORE;
+        return MNHTTP_PARSE_NEED_MORE;
     }
 
     ctx->first_line.end = SDPOS(in, end);
@@ -1134,9 +1134,9 @@ parse_status_line(mnhttp_ctx_t *ctx, mnbytestream_t *in, UNUSED void *udata)
     if ((end = findcrlf(SDATA(in, ctx->first_line.start),
                         SEOD(in) - ctx->first_line.start)) == NULL) {
 
-        /* MRKHTTP_PARSE_NEED_MORE */
+        /* MNHTTP_PARSE_NEED_MORE */
         SADVANCEPOS(in, SEOD(in) - SPOS(in));
-        return MRKHTTP_PARSE_NEED_MORE;
+        return MNHTTP_PARSE_NEED_MORE;
     }
 
     ctx->first_line.end = SDPOS(in, end);
@@ -1216,10 +1216,10 @@ _http_parse_message(void *fd,
                     mnhttp_cb_t body_cb,
                     void *udata)
 {
-    int res = MRKHTTP_PARSE_NEED_MORE;
+    int res = MNHTTP_PARSE_NEED_MORE;
     mnhttp_ctx_t *ctx = in->udata;
 
-    while (res == MRKHTTP_PARSE_NEED_MORE) {
+    while (res == MNHTTP_PARSE_NEED_MORE) {
 
         if (SNEEDMORE(in)) {
             int lres;
@@ -1230,10 +1230,10 @@ _http_parse_message(void *fd,
                 TRACE("consume_data returned %08x", lres);
                 perror("consume_data");
 #endif
-                if (lres == MRKHTTP_PARSE_EOF && ctx->parser_state <= PS_START) {
-                    res = MRKHTTP_PARSE_EMPTY;
+                if (lres == MNHTTP_PARSE_EOF && ctx->parser_state <= PS_START) {
+                    res = MNHTTP_PARSE_EMPTY;
                 } else {
-                    res = MRKHTTP_PARSE_CONSUME_DATA_ERROR;
+                    res = MNHTTP_PARSE_CONSUME_DATA_ERROR;
                 }
                 break;
             }
@@ -1249,8 +1249,8 @@ _http_parse_message(void *fd,
             ctx->parser_state = PS_LINE;
 
         } else if (ctx->parser_state == PS_LINE) {
-            if ((res = parse_line_cb(ctx, in, NULL)) == MRKHTTP_PARSE_NEED_MORE) {
-                //TRACE("parse_line_cb() returned MRKHTTP_PARSE_NEED_MORE");
+            if ((res = parse_line_cb(ctx, in, NULL)) == MNHTTP_PARSE_NEED_MORE) {
+                //TRACE("parse_line_cb() returned MNHTTP_PARSE_NEED_MORE");
                 continue;
             } else if (res != 0) {
                 //TRACE("parse_line_cb() returned %d", res);
@@ -1264,7 +1264,7 @@ _http_parse_message(void *fd,
             }
 
             //TRACE("after line_cb() parser_state=%s", PSSTR(ctx->parser_state));
-            res = MRKHTTP_PARSE_NEED_MORE;
+            res = MNHTTP_PARSE_NEED_MORE;
 
         } else if (ctx->parser_state == PS_HEADER_FIELD_IN) {
             ctx->current_header_name.start = SPOS(in);
@@ -1281,7 +1281,7 @@ _http_parse_message(void *fd,
                                 SEOD(in) -
                                 ctx->current_header_name.start)) == NULL) {
 
-                /* MRKHTTP_PARSE_NEED_MORE */
+                /* MNHTTP_PARSE_NEED_MORE */
                 //TRACE("SEOD=%ld SPOS=%ld", SEOD(in), SPOS(in));
                 SADVANCEPOS(in, SEOD(in) - SPOS(in));
                 continue;
@@ -1322,7 +1322,7 @@ _http_parse_message(void *fd,
                 *end = '\0';
 
                 if ((res = process_header(ctx, in)) != 0) {
-                    if (res != MRKHTTP_PARSE_NEED_MORE) {
+                    if (res != MNHTTP_PARSE_NEED_MORE) {
                         TRRET(HTTP_PARSE_MESSAGE + 10);
                     }
                 }
@@ -1342,7 +1342,7 @@ _http_parse_message(void *fd,
 
 BODY_IN:
             if ((res = process_body(ctx, in, body_cb, udata)) != 0) {
-                if (res != MRKHTTP_PARSE_NEED_MORE) {
+                if (res != MNHTTP_PARSE_NEED_MORE) {
                     TRRET(HTTP_PARSE_MESSAGE + 12);
                 }
             }
@@ -1353,7 +1353,7 @@ BODY_IN:
 
         } else if (ctx->parser_state == PS_BODY) {
             if ((res = process_body(ctx, in, body_cb, udata)) != 0) {
-                if (res != MRKHTTP_PARSE_NEED_MORE) {
+                if (res != MNHTTP_PARSE_NEED_MORE) {
                     TRRET(HTTP_PARSE_MESSAGE + 13);
                 }
             }
