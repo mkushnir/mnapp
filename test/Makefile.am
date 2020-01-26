@@ -1,5 +1,7 @@
 CLEANFILES = *.core
 #CLEANFILES += *.in
+AM_MAKEFLAGS = -s
+AM_LIBTOOLFLAGS = --silent
 
 noinst_PROGRAMS=testdaemonize testhttpuri
 
