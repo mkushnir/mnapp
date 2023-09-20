@@ -115,6 +115,8 @@ typedef struct _mnhttp_uri {
 #define MNHTTPC_MESSAGE_SCHEME_UNDEF    (-1)
 #define MNHTTPC_MESSAGE_SCHEME_HTTP     (0)
 #define MNHTTPC_MESSAGE_SCHEME_HTTPS    (1)
+#define MNHTTPC_MESSAGE_SCHEME_WS       (2)
+#define MNHTTPC_MESSAGE_SCHEME_WSS      (3)
     int scheme;
     mnbytes_t *user;
     mnbytes_t *password;

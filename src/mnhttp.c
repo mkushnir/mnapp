@@ -270,6 +270,12 @@ mnhttp_uri_parse(mnhttp_uri_t *uri, const char *s)
     } else if (strstr(p0, "https://") == p0) {
         uri->scheme = MNHTTPC_MESSAGE_SCHEME_HTTPS;
         p0 += 8;
+    } else if (strstr(p0, "ws://") == p0) {
+        uri->scheme = MNHTTPC_MESSAGE_SCHEME_WS;
+        p0 += 5;
+    } else if (strstr(p0, "wss://") == p0) {
+        uri->scheme = MNHTTPC_MESSAGE_SCHEME_WSS;
+        p0 += 6;
     } else {
         /*
          * will see port conventions;
@@ -408,7 +414,8 @@ mnhttp_uri_parse(mnhttp_uri_t *uri, const char *s)
     }
     if (bytes_is_null_or_empty(uri->port)) {
         BYTES_DECREF(&uri->port);
-        if (uri->scheme == MNHTTPC_MESSAGE_SCHEME_HTTPS) {
+        if ((uri->scheme == MNHTTPC_MESSAGE_SCHEME_HTTPS)
+                || (uri->scheme == MNHTTPC_MESSAGE_SCHEME_WSS)) {
             assert(uri->port == NULL);
             uri->port = bytes_new_from_str("443");
             BYTES_INCREF(uri->port);
