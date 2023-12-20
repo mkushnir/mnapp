@@ -102,7 +102,7 @@ AC_TYPE_UINT64_T
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_FUNC_FORK
-AC_CHECK_FUNCS([dup2 memset socket memchr strcasecmp strchr strdup strncasecmp strstr strtol])
+AC_CHECK_FUNCS([abort2 dup2 memset socket memchr strcasecmp strchr strdup strncasecmp strstr strtol])
 
 
 
