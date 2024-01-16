@@ -276,6 +276,15 @@ mnhttp_uri_parse(mnhttp_uri_t *uri, const char *s)
     } else if (strstr(p0, "wss://") == p0) {
         uri->scheme = MNHTTPC_MESSAGE_SCHEME_WSS;
         p0 += 6;
+    } else if (strstr(p0, "tcp://") == p0) {
+        uri->scheme = MNHTTPC_MESSAGE_SCHEME_TCP
+        p0 += 6;
+    } else if (strstr(p0, "udp://") == p0) {
+        uri->scheme = MNHTTPC_MESSAGE_SCHEME_UDP
+        p0 += 6;
+    } else if (strstr(p0, "serial://") == p0) {
+        uri->scheme = MNHTTPC_MESSAGE_SCHEME_SERIAL;
+        p0 += 9;
     } else {
         /*
          * will see port conventions;
