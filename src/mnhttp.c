@@ -171,7 +171,7 @@ mnhttp_uri_add_qterm(mnhttp_uri_t *uri, mnbytes_t *key, mnbytes_t *value)
 }
 
 
-#define MNHTTP_PARSE_QTERMS_FIND_PAIR(keydecode, valdecode)           \
+#define MNHTTP_PARSE_QTERMS_FIND_PAIR(keydecode, valdecode)            \
     for (j = i0; j < i1; ++j) {                                        \
         char cc;                                                       \
         cc = ss[j];                                                    \
@@ -207,7 +207,7 @@ mnhttp_uri_add_qterm(mnhttp_uri_t *uri, mnbytes_t *key, mnbytes_t *value)
     }                                                                  \
 
 
-#define MNHTTP_PARSE_KVP_BODY(keydecode, valdecode)                   \
+#define MNHTTP_PARSE_KVP_BODY(keydecode, valdecode)                    \
     int res;                                                           \
     char *ss = BCDATA(s);                                              \
     size_t i0, i1, j;                                                  \
@@ -218,12 +218,12 @@ mnhttp_uri_add_qterm(mnhttp_uri_t *uri, mnbytes_t *key, mnbytes_t *value)
         char c;                                                        \
         c = ss[i1];                                                    \
         if (c == rdelim) {                                             \
-            MNHTTP_PARSE_QTERMS_FIND_PAIR(keydecode, valdecode);      \
+            MNHTTP_PARSE_QTERMS_FIND_PAIR(keydecode, valdecode);       \
             i0 = i1 + 1;                                               \
         }                                                              \
     }                                                                  \
     --i1;                                                              \
-    MNHTTP_PARSE_QTERMS_FIND_PAIR(keydecode, valdecode);              \
+    MNHTTP_PARSE_QTERMS_FIND_PAIR(keydecode, valdecode);               \
     return res                                                         \
 
 
@@ -277,10 +277,10 @@ mnhttp_uri_parse(mnhttp_uri_t *uri, const char *s)
         uri->scheme = MNHTTPC_MESSAGE_SCHEME_WSS;
         p0 += 6;
     } else if (strstr(p0, "tcp://") == p0) {
-        uri->scheme = MNHTTPC_MESSAGE_SCHEME_TCP
+        uri->scheme = MNHTTPC_MESSAGE_SCHEME_TCP;
         p0 += 6;
     } else if (strstr(p0, "udp://") == p0) {
-        uri->scheme = MNHTTPC_MESSAGE_SCHEME_UDP
+        uri->scheme = MNHTTPC_MESSAGE_SCHEME_UDP;
         p0 += 6;
     } else if (strstr(p0, "serial://") == p0) {
         uri->scheme = MNHTTPC_MESSAGE_SCHEME_SERIAL;
