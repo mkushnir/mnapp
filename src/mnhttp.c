@@ -292,41 +292,49 @@ mnhttp_uri_parse(mnhttp_uri_t *uri, const char *s)
     }
 
     if ((ppath = strchr(p0, '/')) != NULL) {
-        assert(uri->relative == NULL);
-        uri->relative = bytes_new_from_str(ppath);
-        BYTES_INCREF(uri->relative);
-        if ((pqstring = strchr(ppath, '?')) != NULL) {
-            ++pqstring;
-            if ((pfragment = strchr(pqstring, '#')) != NULL) {
-                assert(uri->qstring == NULL);
-                uri->qstring = bytes_new_from_str_len(
-                    pqstring, pfragment - pqstring);
-                BYTES_INCREF(uri->qstring);
-                assert(uri->fragment == NULL);
-                uri->fragment = bytes_new_from_str(pfragment);
-                BYTES_INCREF(uri->fragment);
-            } else {
-                /* no fragment */
-                assert(uri->qstring == NULL);
-                uri->qstring = bytes_new_from_str(pqstring);
-                BYTES_INCREF(uri->qstring);
-            }
-            assert(uri->path == NULL);
-            uri->path = bytes_new_from_str_len(ppath, pqstring - ppath - 1);
+        if (uri->scheme == MNHTTPC_MESSAGE_SCHEME_SERIAL) {
+            // disk path, assume right after scheme
+            uri->path = bytes_new_from_str(ppath);
             BYTES_INCREF(uri->path);
         } else {
-            /* no qstring */
-            if ((pfragment = strchr(ppath, '#')) != NULL) {
-                assert(uri->fragment == NULL);
-                uri->fragment = bytes_new_from_str(pfragment);
-                BYTES_INCREF(uri->fragment);
+            assert(uri->relative == NULL);
+            uri->relative = bytes_new_from_str(ppath);
+            BYTES_INCREF(uri->relative);
+            if ((pqstring = strchr(ppath, '?')) != NULL) {
+                ++pqstring;
+                if ((pfragment = strchr(pqstring, '#')) != NULL) {
+                    assert(uri->qstring == NULL);
+                    uri->qstring = bytes_new_from_str_len(
+                        pqstring, pfragment - pqstring);
+                    BYTES_INCREF(uri->qstring);
+                    assert(uri->fragment == NULL);
+                    uri->fragment = bytes_new_from_str(pfragment);
+                    BYTES_INCREF(uri->fragment);
+                } else {
+                    /* no fragment */
+                    assert(uri->qstring == NULL);
+                    uri->qstring = bytes_new_from_str(pqstring);
+                    BYTES_INCREF(uri->qstring);
+                }
                 assert(uri->path == NULL);
-                uri->path = bytes_new_from_str_len(ppath, pfragment - ppath);
+                uri->path = bytes_new_from_str_len(
+                        ppath, pqstring - ppath - 1);
                 BYTES_INCREF(uri->path);
             } else {
-                assert(uri->path == NULL);
-                uri->path = bytes_new_from_str(ppath);
-                BYTES_INCREF(uri->path);
+                /* no qstring */
+                if ((pfragment = strchr(ppath, '#')) != NULL) {
+                    assert(uri->fragment == NULL);
+                    uri->fragment = bytes_new_from_str(pfragment);
+                    BYTES_INCREF(uri->fragment);
+                    assert(uri->path == NULL);
+                    uri->path = bytes_new_from_str_len(
+                            ppath, pfragment - ppath);
+                    BYTES_INCREF(uri->path);
+                } else {
+                    assert(uri->path == NULL);
+                    uri->path = bytes_new_from_str(ppath);
+                    BYTES_INCREF(uri->path);
+                }
             }
         }
 
@@ -421,6 +429,7 @@ mnhttp_uri_parse(mnhttp_uri_t *uri, const char *s)
             }
         }
     }
+
     if (bytes_is_null_or_empty(uri->port)) {
         BYTES_DECREF(&uri->port);
         if ((uri->scheme == MNHTTPC_MESSAGE_SCHEME_HTTPS)
@@ -428,12 +437,14 @@ mnhttp_uri_parse(mnhttp_uri_t *uri, const char *s)
             assert(uri->port == NULL);
             uri->port = bytes_new_from_str("443");
             BYTES_INCREF(uri->port);
-        } else {
+        } else if ((uri->scheme == MNHTTPC_MESSAGE_SCHEME_HTTP)
+                || (uri->scheme == MNHTTPC_MESSAGE_SCHEME_WS)) {
             assert(uri->port == NULL);
             uri->port = bytes_new_from_str("80");
             BYTES_INCREF(uri->port);
         }
     }
+
     if (uri->scheme == MNHTTPC_MESSAGE_SCHEME_UNDEF) {
         if (bytes_cmp(uri->port, BYTES_REF("443")) == 0) {
             uri->scheme = MNHTTPC_MESSAGE_SCHEME_HTTPS;
