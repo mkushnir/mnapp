@@ -33,7 +33,7 @@ mnhttpc_message_init_out(mnhttpc_message_t *msg)
               (hash_item_comparator_t)bytes_cmp,
               (hash_item_finalizer_t)mnhttpc_request_header_item_fini);
     msg->out.content_length = 0;
-    msg->out.flags.keepalive = 1;
+    msg->out.flags.keepalive = -1;
 }
 
 
@@ -45,7 +45,7 @@ mnhttpc_message_fini_out(mnhttpc_message_t *msg)
     BYTES_DECREF(&msg->out.content_type);
     hash_fini(&msg->out.headers);
     msg->out.content_length = 0;
-    msg->out.flags.keepalive = 1;
+    msg->out.flags.keepalive = -1;
 }
 
 
@@ -58,7 +58,7 @@ mnhttpc_message_init_in(mnhttpc_message_t *msg)
               (hash_hashfn_t)bytes_hash,
               (hash_item_comparator_t)bytes_cmp,
               (hash_item_finalizer_t)mnhttpc_request_header_item_fini);
-    msg->in.flags.keepalive = 1;
+    msg->in.flags.keepalive = -1;
 }
 
 
@@ -68,7 +68,7 @@ mnhttpc_message_fini_in(mnhttpc_message_t *msg)
     http_ctx_fini(&msg->in.ctx);
     BYTES_DECREF(&msg->in.content_type);
     hash_fini(&msg->in.headers);
-    msg->in.flags.keepalive = 1;
+    msg->in.flags.keepalive = -1;
 }
 
 
