@@ -408,16 +408,18 @@ mncommand_ctx_add_cmd(mncommand_ctx_t *ctx,
 
 
 static int
-mncommand_cmd_init(mncommand_cmd_t *cmd)
+mncommand_cmd_init(void *o)
 {
+    mncommand_cmd_t *cmd = o;
     memset(cmd, 0, sizeof(mncommand_cmd_t));
     return 0;
 }
 
 
 static int
-mncommand_cmd_fini(mncommand_cmd_t *cmd)
+mncommand_cmd_fini(void *o)
 {
+    mncommand_cmd_t *cmd = o;
     BYTES_DECREF(&cmd->longname);
     BYTES_DECREF(&cmd->description);
     BYTES_DECREF(&cmd->helpspec);
@@ -432,8 +434,8 @@ mncommand_ctx_init(mncommand_ctx_t *ctx)
     if (array_init(&ctx->commands,
                    sizeof(mncommand_cmd_t),
                    0,
-                   (array_initializer_t)mncommand_cmd_init,
-                   (array_finalizer_t)mncommand_cmd_fini) != 0) {
+                   mncommand_cmd_init,
+                   mncommand_cmd_fini) != 0) {
         TRRET(MNCOMMAND_CTX_INIT + 1);
     }
 
