@@ -113,9 +113,25 @@ http_urldecode(char *s)
 }
 
 
-static int
-mnhttp_uri_qterm_fini(mnbytes_t *key, mnbytes_t *value)
+static uint64_t
+_bytes_hash (void const *o)
 {
+    mnbytes_t const *b = o;
+    return bytes_hash(b);
+}
+
+
+static int
+_bytes_cmp (void const *oa, void const *ob)
+{
+    mnbytes_t const *a = oa, *b = ob;
+    return bytes_cmp(a, b);
+}
+
+static int
+mnhttp_uri_qterm_fini(void *k, void *v)
+{
+    mnbytes_t *key = k, *value = v;
     BYTES_DECREF(&key);
     BYTES_DECREF(&value);
     return 0;
@@ -135,9 +151,9 @@ mnhttp_uri_init(mnhttp_uri_t *uri)
     uri->qstring = NULL;
     uri->fragment = NULL;
     hash_init(&uri->qterms, 17,
-              (hash_hashfn_t)bytes_hash,
-              (hash_item_comparator_t)bytes_cmp,
-              (hash_item_finalizer_t)mnhttp_uri_qterm_fini);
+              _bytes_hash,
+              _bytes_cmp,
+              mnhttp_uri_qterm_fini);
     uri->qtermsz = 0;
 }
 

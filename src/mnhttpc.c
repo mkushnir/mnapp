@@ -14,13 +14,29 @@
 
 
 static int
-mnhttpc_request_header_item_fini(mnbytes_t *name, mnbytes_t *value)
+mnhttpc_request_header_item_fini(void *k, void *v)
 {
+    mnbytes_t *name = k, *value = v;
     BYTES_DECREF(&name);
     BYTES_DECREF(&value);
     return 0;
 }
 
+
+static uint64_t
+_bytes_hash (void const *o)
+{
+    mnbytes_t const *b = o;
+    return bytes_hash(b);
+}
+
+
+static int
+_bytes_cmp (void const *oa, void const *ob)
+{
+    mnbytes_t const *a = oa, *b = ob;
+    return bytes_cmp(a, b);
+}
 
 static void
 mnhttpc_message_init_out(mnhttpc_message_t *msg)
@@ -29,9 +45,9 @@ mnhttpc_message_init_out(mnhttpc_message_t *msg)
     mnhttp_uri_init(&msg->out.uri);
     msg->out.content_type = NULL;
     hash_init(&msg->out.headers, 17,
-              (hash_hashfn_t)bytes_hash,
-              (hash_item_comparator_t)bytes_cmp,
-              (hash_item_finalizer_t)mnhttpc_request_header_item_fini);
+              _bytes_hash,
+              _bytes_cmp,
+              mnhttpc_request_header_item_fini);
     msg->out.content_length = 0;
     msg->out.flags.keepalive = -1;
 }
@@ -55,9 +71,9 @@ mnhttpc_message_init_in(mnhttpc_message_t *msg)
     http_ctx_init(&msg->in.ctx);
     msg->in.content_type = NULL;
     hash_init(&msg->in.headers, 17,
-              (hash_hashfn_t)bytes_hash,
-              (hash_item_comparator_t)bytes_cmp,
-              (hash_item_finalizer_t)mnhttpc_request_header_item_fini);
+              _bytes_hash,
+              _bytes_cmp,
+              mnhttpc_request_header_item_fini);
     msg->in.flags.keepalive = -1;
 }
 
@@ -211,8 +227,9 @@ mnhttpc_request_in_header(mnhttpc_request_t *req, mnbytes_t *name)
 
 
 static uint64_t
-mnhttpc_connection_hash(mnhttpc_connection_t *conn)
+mnhttpc_connection_hash(void const *o)
 {
+    mnhttpc_connection_t *conn = (mnhttpc_connection_t *)o;
     if (conn->hash == 0) {
         if (conn->proxy_host != NULL) {
             conn->hash = bytes_hash(conn->proxy_host);
@@ -252,8 +269,9 @@ mnhttpc_connection_hash(mnhttpc_connection_t *conn)
 
 
 static int
-mnhttpc_connection_cmp(mnhttpc_connection_t *a, mnhttpc_connection_t *b)
+mnhttpc_connection_cmp(void const *oa, void const *ob)
 {
+    mnhttpc_connection_t *a = (mnhttpc_connection_t *)oa, *b = (mnhttpc_connection_t *)ob;
     uint64_t ha, hb;
 
     ha = mnhttpc_connection_hash(a);
@@ -330,8 +348,9 @@ mnhttpc_connection_destroy(mnhttpc_connection_t **conn)
 
 
 static int
-mnhttpc_connection_item_fini(mnhttpc_connection_t *conn, UNUSED void *value)
+mnhttpc_connection_item_fini(void *k, UNUSED void *value)
 {
+    mnhttpc_connection_t *conn = k;
     mnhttpc_connection_destroy(&conn);
     return 0;
 }
@@ -704,10 +723,11 @@ mnhttpc_connection_ensure_connected(mnhttpc_connection_t *conn)
 
 
 static int
-mnhttpc_connection_gc(mnhttpc_connection_t *conn,
+mnhttpc_connection_gc(void *key,
                       UNUSED void *value,
                       UNUSED void *udata)
 {
+    mnhttpc_connection_t *conn = key;
     int res;
 
     res = 0;
@@ -739,7 +759,7 @@ void
 mnhttpc_gc(mnhttpc_t *cli)
 {
     (void)hash_traverse(&cli->connections,
-                        (hash_traverser_t)mnhttpc_connection_gc,
+                        mnhttpc_connection_gc,
                         NULL);
 }
 
@@ -751,9 +771,9 @@ void
 mnhttpc_init(mnhttpc_t *cli)
 {
     hash_init(&cli->connections, 127,
-              (hash_hashfn_t)mnhttpc_connection_hash,
-              (hash_item_comparator_t)mnhttpc_connection_cmp,
-              (hash_item_finalizer_t)mnhttpc_connection_item_fini);
+              mnhttpc_connection_hash,
+              mnhttpc_connection_cmp,
+              mnhttpc_connection_item_fini);
 }
 
 
