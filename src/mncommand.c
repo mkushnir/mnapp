@@ -122,8 +122,11 @@ end0:
 
 
 static int
-getopt_symbol(mncommand_cmd_t *cmd, mnbytestream_t *bs)
+getopt_symbol(void *o, void *udata)
 {
+    mncommand_cmd_t *cmd = o;
+    mnbytestream_t *bs = udata;
+
     if (isalnum(cmd->opt.val)) {
         char c = cmd->opt.val;
         bytestream_cat(bs, 1, &c);
@@ -187,7 +190,7 @@ mncommand_ctx_getopt(mncommand_ctx_t *ctx,
     }
 
     // build getopt_long(3) symbols
-    (void)array_traverse(&ctx->commands, (array_traverser_t)getopt_symbol, &bs);
+    (void)array_traverse(&ctx->commands, getopt_symbol, &bs);
     /* terminating null */
     bytestream_cat(&bs, 1, "");
 
